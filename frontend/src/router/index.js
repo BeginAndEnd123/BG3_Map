@@ -13,6 +13,11 @@ const routes = [
 
 const WHITE_LIST = ['login', 'register']
 
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+})
+
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
   if (WHITE_LIST.includes(to.name)) {
@@ -21,11 +26,6 @@ router.beforeEach((to, _from, next) => {
   }
   if (!token) return next({ name: 'login' })
   next()
-})
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
 })
 
 export default router
