@@ -23,6 +23,14 @@ Thumbs.db
 # Generated tiles (可重新生成，体积过大)
 TileMap/
 
+# 项目文档（不纳入版本控制）
+项目相关报告以及截图/
+
+# SSH keys (防止私钥泄露)
+id_rsa
+id_rsa.pub
+*.pem
+
 # Temp
 *.tmp
 tools/fix_admin_pw.py
