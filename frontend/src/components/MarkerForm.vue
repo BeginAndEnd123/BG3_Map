@@ -19,15 +19,8 @@
           描述
           <textarea v-model="form.description" placeholder="可选描述" rows="3"></textarea>
         </label>
-        <div class="coord-row">
-          <label>
-            X 坐标
-            <input v-model.number="form.x_coord" type="number" step="0.01" required />
-          </label>
-          <label>
-            Y 坐标
-            <input v-model.number="form.y_coord" type="number" step="0.01" required />
-          </label>
+        <div class="coord-info">
+          坐标已通过地图选取：{{ form.x_coord.toFixed(2) }}, {{ form.y_coord.toFixed(2) }}
         </div>
         <label>
           截图 URL
@@ -143,8 +136,14 @@ label input, label select, label textarea {
   font-size: 14px;
 }
 label textarea { resize: vertical; }
-.coord-row { display: flex; gap: 12px; }
-.coord-row label { flex: 1; }
+.coord-info {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  background: #16213e;
+  border-radius: 4px;
+}
 .form-error { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .btn-cancel, .btn-submit {
