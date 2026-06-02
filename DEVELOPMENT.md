@@ -25,6 +25,16 @@
 | 管理员账号 | `admin` / `admin123` | bcrypt 加密 |
 | bcrypt 版本 | 4.2.1 | 降级以兼容 passlib（5.0 API 不兼容） |
 | Navicat | `E:\navicat170_premium_cs_x64\navicat.exe` | 已安装 |
+| GitHub 仓库 | `git@github.com:BeginAndEnd123/BG3_Map.git` | SSH |
+| SSH 密钥 | `~/.ssh/id_rsa` (私钥) / `~/.ssh/id_rsa.pub` (公钥) | 需在 GitHub Settings 添加公钥 |
+
+### SSH 公钥（添加到 GitHub）
+
+```
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDROCWwvjS/gMchxRqf6chPXNm9OU+YAFDMzC1HhS+uOC/5bZeeaHgjh+am9r1CFQKSzZ0tEJNKScP27RR2DRBLTC/96pKFm0rhxIaPXvIK7FLMegAEXsAoMnRGESkAFr4bBsisk9ecAPxnz4b7NRnbgK3z1gRIklaVEKZciAVX2NOX6dv1KPLrJddZtME4RzfF972VsKRw7EVGSH8lCA7rTMEbaxD/sQBfZQT0xYNZ4nwtCGu2A2xGMJCzFoYj/6XMip53oTFIf4tYP2g6wOjBKC9LCVsvlWhXlRAKBZ4ezPV1UqR2yIKN3uZ/nEZsh6kkRX+hlxouF8KwL/BXJhG41wODTwsgRX7oW2XRY1gZL/ghzkc098wpu1DBcFgTlRfuT4WJcabeSM785mCKI0ufRu5/MGq0A5WuK7tnTQEchC+yHO0HMBAPp4+0g1HfalksUxvWJlfZeQtOwQHw4ju3/0YfOJn5ep8uw3EGZarI4YeynQXwwivG6LLo4QpsyUM= 2759919162@qq.com
+```
+
+> 私钥 `id_rsa` 位于 `~/.ssh/` 目录，切勿提交到 Git。
 
 ---
 

@@ -12,6 +12,15 @@
         </select>
       </div>
 
+      <div class="map-select" v-if="mapStore.maps.length > 0">
+        <h3>选择地图</h3>
+        <select v-model="selectedMapName" @change="onMapChange">
+          <option v-for="m in mapStore.maps" :key="m.name" :value="m.name">
+            {{ m.name }}
+          </option>
+        </select>
+      </div>
+
       <div class="category-filter">
         <h3>分类筛选</h3>
         <label v-for="c in mapStore.categories" :key="c.id" class="category-item">
@@ -89,9 +98,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
+import { getMaps } from '../api/maps'
 import SidePanel from '../components/SidePanel.vue'
 import MapContainer from '../components/MapContainer.vue'
 import MarkerPopup from '../components/MarkerPopup.vue'
@@ -107,11 +117,12 @@ const selectedMarker = ref(null)
 const loading = ref(false)
 const showAddForm = ref(false)
 const editingMarker = ref(null)
+const selectedMapName = ref('')
 
 const isAdmin = computed(() => authStore.user?.is_admin)
 
 const tileUrl = computed(() => {
-  return mapStore.currentRegion?.tile_url || ''
+  return mapStore.currentMap?.tile_url || ''
 })
 
 const selectedCategoryName = computed(() => {
@@ -125,6 +136,23 @@ const selectedCategoryColor = computed(() => {
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.color || '#3388ff'
 })
+
+async function fetchMaps() {
+  const region = mapStore.currentRegion
+  if (!region) return
+  const chapterKey = mapStore.getChapterKey(region.sort_order)
+  if (!chapterKey) return
+  try {
+    const res = await getMaps({ chapter: chapterKey })
+    mapStore.maps = res.data
+    if (res.data.length > 0) {
+      selectedMapName.value = res.data[0].name
+      mapStore.setMap(res.data[0])
+    }
+  } catch {
+    console.error('加载地图列表失败')
+  }
+}
 
 async function loadMarkers() {
   loading.value = true
@@ -148,8 +176,14 @@ function onRegionChange() {
   const region = mapStore.regions.find((r) => r.id === currentRegionId.value)
   if (region) {
     mapStore.setRegion(region)
+    fetchMaps()
     loadMarkers()
   }
+}
+
+function onMapChange() {
+  const mapItem = mapStore.maps.find(m => m.name === selectedMapName.value)
+  if (mapItem) mapStore.setMap(mapItem)
 }
 
 function onMarkerClick(marker) {
@@ -197,6 +231,7 @@ onMounted(async () => {
   if (mapStore.regions.length > 0) {
     currentRegionId.value = mapStore.regions[0].id
     mapStore.setRegion(mapStore.regions[0])
+    fetchMaps()
   }
   loadMarkers()
 })
@@ -300,28 +335,7 @@ onMounted(async () => {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-</style>
-
-<style scoped>
-.map-page {
-  display: flex;
-  width: 100%;
-  height: 100vh;
-}
-
-.sidebar :deep(h2) {
-  font-size: 20px;
-  margin-bottom: 20px;
-  color: #ffd700;
-}
-
-.sidebar :deep(h3) {
-  font-size: 14px;
-  margin: 12px 0 6px;
-  color: #aaa;
-}
-
-.region-select select {
+.map-select select {
   width: 100%;
   padding: 8px;
   border: 1px solid #444;
@@ -329,61 +343,6 @@ onMounted(async () => {
   background: #16213e;
   color: #eee;
   font-size: 14px;
+  margin-top: 2px;
 }
-
-.category-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 4px 0;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #16213e;
-  color: #eee;
-  font-size: 13px;
-}
-
-.stats {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #333;
-  font-size: 13px;
-}
-
-.map-wrapper {
-  flex: 1;
-  position: relative;
-}
-
-.loading-mask {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  color: #fff;
-  font-size: 14px;
-  gap: 12px;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-top-color: #ffd700;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
 </style>

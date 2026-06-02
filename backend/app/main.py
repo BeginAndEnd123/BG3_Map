@@ -2,7 +2,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from .routers import auth, regions, categories, markers
+from .routers import auth, regions, categories, markers, maps
 
 app = FastAPI(title="博德之门3 交互式地图", version="1.0.0")
 
@@ -21,6 +21,7 @@ app.include_router(auth.router)
 app.include_router(regions.router)
 app.include_router(categories.router)
 app.include_router(markers.router)
+app.include_router(maps.router)
 
 
 @app.get("/")

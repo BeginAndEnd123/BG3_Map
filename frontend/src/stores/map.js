@@ -4,11 +4,15 @@ import { getRegions } from '../api/regions'
 import { getCategories } from '../api/categories'
 import { getMarkers, createMarker, updateMarker, deleteMarker } from '../api/markers'
 
+const CHAPTER_KEYS = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
+
 export const useMapStore = defineStore('map', () => {
   const regions = ref([])
   const categories = ref([])
   const markers = ref([])
+  const maps = ref([])
   const currentRegion = ref(null)
+  const currentMap = ref(null)
   const selectedCategory = ref(null)
 
   async function fetchRegions() {
@@ -49,15 +53,25 @@ export const useMapStore = defineStore('map', () => {
 
   function setRegion(region) {
     currentRegion.value = region
+    currentMap.value = null
+    maps.value = []
+  }
+
+  function setMap(mapItem) {
+    currentMap.value = mapItem
   }
 
   function setCategory(categoryId) {
     selectedCategory.value = categoryId
   }
 
+  function getChapterKey(regionSortOrder) {
+    return CHAPTER_KEYS[regionSortOrder] || ''
+  }
+
   return {
-    regions, categories, markers, currentRegion, selectedCategory,
-    fetchRegions, fetchCategories, fetchMarkers, setRegion, setCategory,
-    addMarker, editMarker, removeMarker,
+    regions, categories, markers, maps, currentRegion, currentMap, selectedCategory,
+    fetchRegions, fetchCategories, fetchMarkers, setRegion, setMap, setCategory,
+    addMarker, editMarker, removeMarker, getChapterKey,
   }
 })
