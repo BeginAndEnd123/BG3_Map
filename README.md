@@ -19,13 +19,6 @@
 | 地图引擎 | Leaflet.js (CRS.Simple) | 1.9 |
 | 认证 | JWT (python-jose + passlib) | - |
 
-## 文档索引
-git@github.com:BeginAndEnd123/BG3_Map.git
-| 文档 | 说明 |
-|------|------|
-| [PRD.docx](项目相关报告以及截图/PRD.docx) | 产品需求文档 |
-| 项目相关报告以及截图/报告文件/ | 课程设计报告 |
-| 项目相关报告以及截图/截图/ | 项目运行截图 |
 
 ## 功能需求
 
