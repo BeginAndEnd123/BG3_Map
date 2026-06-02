@@ -67,6 +67,7 @@
         :pick-mode="pickMode"
         :temp-marker="tempMarker"
         @marker-click="onMarkerClick"
+        @map-pick="onMapPick"
       />
 
       <div class="loading-mask" v-if="loading">
