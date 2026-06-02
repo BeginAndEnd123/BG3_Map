@@ -10,14 +10,31 @@ const props = defineProps({
   tileUrl: { type: String, default: '' },
   markers: { type: Array, default: () => [] },
   categories: { type: Array, default: () => [] },
+  pickMode: { type: Boolean, default: false },
+  tempMarker: { type: Object, default: null },
 })
 
-const emit = defineEmits(['marker-click'])
+const emit = defineEmits(['marker-click', 'map-pick'])
 const container = ref(null)
 
 let map = null
 let tileLayer = null
 let markerLayer = null
+let pickLayer = null
+let pickMarker = null
+let clickHandler = null
+
+const pickIcon = L.divIcon({
+  html: `<div style="
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #ff4444; border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    cursor: grab;
+  "></div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  className: '',
+})
 
 function initMap() {
   map = L.map(container.value, {
@@ -27,6 +44,7 @@ function initMap() {
     zoomControl: true,
   })
   markerLayer = L.layerGroup().addTo(map)
+  pickLayer = L.layerGroup().addTo(map)
 }
 
 function updateTileLayer(url) {
@@ -62,14 +80,49 @@ function updateMarkers() {
   })
 }
 
+function updatePickMode() {
+  if (!map) return
+  if (clickHandler) {
+    map.off('click', clickHandler)
+    clickHandler = null
+  }
+  if (props.pickMode) {
+    container.value.style.cursor = 'crosshair'
+    clickHandler = (e) => {
+      emit('map-pick', { x: e.latlng.lat, y: e.latlng.lng })
+    }
+    map.on('click', clickHandler)
+  } else {
+    container.value.style.cursor = ''
+  }
+}
+
+function updateTempMarker() {
+  if (!pickLayer) return
+  pickLayer.clearLayers()
+  if (props.tempMarker) {
+    const marker = L.marker([props.tempMarker.x, props.tempMarker.y], {
+      icon: pickIcon,
+      draggable: true,
+    }).addTo(pickLayer)
+    marker.on('dragend', () => {
+      const pos = marker.getLatLng()
+      emit('map-pick', { x: pos.lat, y: pos.lng })
+    })
+  }
+}
+
 onMounted(() => {
   initMap()
   updateTileLayer(props.tileUrl)
   updateMarkers()
+  updatePickMode()
 })
 
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
 watch(() => props.markers, () => updateMarkers(), { deep: true })
+watch(() => props.pickMode, () => updatePickMode())
+watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 </script>
 
 <style scoped>

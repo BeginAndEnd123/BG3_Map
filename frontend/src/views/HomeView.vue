@@ -52,7 +52,7 @@
       <button
         v-if="isAdmin"
         class="add-btn"
-        @click="showAddForm = true"
+        @click="onStartAdd"
       >
         + 新增标记
       </button>
@@ -64,12 +64,19 @@
         :tile-url="tileUrl"
         :markers="mapStore.markers"
         :categories="mapStore.categories"
+        :pick-mode="pickMode"
+        :temp-marker="tempMarker"
         @marker-click="onMarkerClick"
+        @map-pick="onMapPick"
       />
 
       <div class="loading-mask" v-if="loading">
         <div class="spinner"></div>
         <p>加载中...</p>
+      </div>
+
+      <div class="pick-hint" v-if="pickMode">
+        点击地图放置标记，拖动可调整位置
       </div>
     </div>
 
@@ -91,6 +98,7 @@
       :marker="editingMarker"
       :categories="mapStore.categories"
       :region-id="currentRegionId"
+      :initial-coords="pickerCoords"
       @close="closeForm"
       @submit="onFormSubmit"
     />
@@ -118,6 +126,9 @@ const loading = ref(false)
 const showAddForm = ref(false)
 const editingMarker = ref(null)
 const selectedMapName = ref('')
+const pickMode = ref(false)
+const tempMarker = ref(null)
+const pickerCoords = ref(null)
 
 const isAdmin = computed(() => authStore.user?.is_admin)
 
@@ -190,9 +201,24 @@ function onMarkerClick(marker) {
   selectedMarker.value = marker
 }
 
+function onStartAdd() {
+  pickMode.value = true
+  tempMarker.value = null
+  pickerCoords.value = null
+  showAddForm.value = true
+}
+
+function onMapPick(coords) {
+  tempMarker.value = coords
+  pickerCoords.value = coords
+}
+
 function closeForm() {
   showAddForm.value = false
   editingMarker.value = null
+  pickMode.value = false
+  tempMarker.value = null
+  pickerCoords.value = null
 }
 
 function onEditMarker(marker) {
@@ -336,6 +362,21 @@ onMounted(async () => {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.pick-hint {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  color: #ffd700;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
 .map-select select {
   width: 100%;
   padding: 8px;

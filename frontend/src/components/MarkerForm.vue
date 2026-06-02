@@ -46,12 +46,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 
 const props = defineProps({
   marker: { type: Object, default: null },
   categories: { type: Array, default: () => [] },
   regionId: { type: Number, default: null },
+  initialCoords: { type: Object, default: null },
 })
 
 const emit = defineEmits(['close', 'submit'])
@@ -77,8 +78,18 @@ onMounted(() => {
     form.x_coord = Number(props.marker.x_coord)
     form.y_coord = Number(props.marker.y_coord)
     form.screenshot = props.marker.screenshot || ''
+  } else if (props.initialCoords) {
+    form.x_coord = props.initialCoords.x
+    form.y_coord = props.initialCoords.y
   }
 })
+
+watch(() => props.initialCoords, (coords) => {
+  if (coords && !props.marker) {
+    form.x_coord = coords.x
+    form.y_coord = coords.y
+  }
+}, { deep: true })
 
 async function onSubmit() {
   submitting.value = true
