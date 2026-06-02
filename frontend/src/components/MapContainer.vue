@@ -22,7 +22,6 @@ let tileLayer = null
 let markerLayer = null
 let pickLayer = null
 let pickMarker = null
-let clickHandler = null
 
 const pickIcon = L.divIcon({
   html: `<div style="
@@ -82,19 +81,7 @@ function updateMarkers() {
 
 function updatePickMode() {
   if (!map) return
-  if (clickHandler) {
-    map.off('click', clickHandler)
-    clickHandler = null
-  }
-  if (props.pickMode) {
-    container.value.style.cursor = 'crosshair'
-    clickHandler = (e) => {
-      emit('map-pick', { x: e.latlng.lat, y: e.latlng.lng })
-    }
-    map.on('click', clickHandler)
-  } else {
-    container.value.style.cursor = ''
-  }
+  container.value.style.cursor = props.pickMode ? 'grab' : ''
 }
 
 function updateTempMarker() {

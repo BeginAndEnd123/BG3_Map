@@ -67,7 +67,6 @@
         :pick-mode="pickMode"
         :temp-marker="tempMarker"
         @marker-click="onMarkerClick"
-        @map-pick="onMapPick"
       />
 
       <div class="loading-mask" v-if="loading">
@@ -75,8 +74,9 @@
         <p>加载中...</p>
       </div>
 
-      <div class="pick-hint" v-if="pickMode">
-        点击地图放置标记，拖动可调整位置
+      <div class="pick-overlay" v-if="pickMode">
+        <div class="pick-hint">拖动标记到目标位置</div>
+        <button class="confirm-btn" @click="onConfirmPosition">确认位置</button>
       </div>
     </div>
 
@@ -203,14 +203,20 @@ function onMarkerClick(marker) {
 
 function onStartAdd() {
   pickMode.value = true
-  tempMarker.value = null
+  tempMarker.value = { x: 0, y: 0 }
   pickerCoords.value = null
-  showAddForm.value = true
+  showAddForm.value = false
 }
 
 function onMapPick(coords) {
   tempMarker.value = coords
   pickerCoords.value = coords
+}
+
+function onConfirmPosition() {
+  if (!tempMarker.value) return
+  pickerCoords.value = { ...tempMarker.value }
+  showAddForm.value = true
 }
 
 function closeForm() {
@@ -363,19 +369,37 @@ onMounted(async () => {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.pick-hint {
+.pick-overlay {
   position: absolute;
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+}
+.pick-hint {
   background: rgba(0,0,0,0.75);
   color: #ffd700;
   padding: 8px 20px;
   border-radius: 6px;
   font-size: 14px;
-  z-index: 1000;
-  pointer-events: none;
+  white-space: nowrap;
 }
+.confirm-btn {
+  padding: 10px 32px;
+  border: none;
+  border-radius: 6px;
+  background: #ffd700;
+  color: #1a1a2e;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.confirm-btn:hover { background: #ffed4a; }
 
 .map-select select {
   width: 100%;
