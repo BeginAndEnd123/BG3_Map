@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   avatar VARCHAR(255),
+  is_admin TINYINT(1) DEFAULT 0,
   created_at DATETIME DEFAULT NOW()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

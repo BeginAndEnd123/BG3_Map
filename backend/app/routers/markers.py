@@ -4,8 +4,7 @@ from typing import Optional
 from ..database import get_db
 from ..models import Marker, Region, Category
 from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse
-from ..auth import get_current_user
-from ..models import User
+from ..auth import require_admin
 
 router = APIRouter(prefix="/api/markers", tags=["标记"])
 
@@ -40,7 +39,7 @@ def get_marker(marker_id: int, db: Session = Depends(get_db)):
 def create_marker(
     data: MarkerCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _=Depends(require_admin),
 ):
     marker = Marker(**data.model_dump())
     db.add(marker)
@@ -54,7 +53,7 @@ def update_marker(
     marker_id: int,
     data: MarkerUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _=Depends(require_admin),
 ):
     marker = db.query(Marker).filter(Marker.id == marker_id).first()
     if not marker:
@@ -70,7 +69,7 @@ def update_marker(
 def delete_marker(
     marker_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _=Depends(require_admin),
 ):
     marker = db.query(Marker).filter(Marker.id == marker_id).first()
     if not marker:

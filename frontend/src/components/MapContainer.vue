@@ -43,16 +43,19 @@ function updateMarkers() {
   props.markers.forEach((m) => {
     const cat = props.categories.find((c) => c.id === m.category_id)
     const color = cat?.color || '#3388ff'
-    const icon = L.divIcon({
-      html: `<div style="
-        width: 12px; height: 12px; border-radius: 50%;
-        background: ${color}; border: 2px solid #fff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      "></div>`,
-      iconSize: [12, 12],
-      iconAnchor: [6, 6],
-      className: '',
-    })
+    const iconUrl = cat?.icon
+    const icon = iconUrl
+      ? L.icon({ iconUrl, iconSize: [24, 24], iconAnchor: [12, 12], className: '' })
+      : L.divIcon({
+          html: `<div style="
+            width: 12px; height: 12px; border-radius: 50%;
+            background: ${color}; border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          "></div>`,
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
+          className: '',
+        })
     const marker = L.marker([m.x_coord, m.y_coord], { icon }).addTo(markerLayer)
     marker.bindPopup(`<b>${m.name}</b><br>${m.description || ''}`)
     marker.on('click', () => emit('marker-click', m))

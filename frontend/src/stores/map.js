@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getRegions } from '../api/regions'
 import { getCategories } from '../api/categories'
-import { getMarkers } from '../api/markers'
+import { getMarkers, createMarker, updateMarker, deleteMarker } from '../api/markers'
 
 export const useMapStore = defineStore('map', () => {
   const regions = ref([])
@@ -29,6 +29,24 @@ export const useMapStore = defineStore('map', () => {
     markers.value = res.data
   }
 
+  async function addMarker(data) {
+    const res = await createMarker(data)
+    markers.value.push(res.data)
+    return res.data
+  }
+
+  async function editMarker(id, data) {
+    const res = await updateMarker(id, data)
+    const idx = markers.value.findIndex(m => m.id === id)
+    if (idx !== -1) markers.value[idx] = res.data
+    return res.data
+  }
+
+  async function removeMarker(id) {
+    await deleteMarker(id)
+    markers.value = markers.value.filter(m => m.id !== id)
+  }
+
   function setRegion(region) {
     currentRegion.value = region
   }
@@ -40,5 +58,6 @@ export const useMapStore = defineStore('map', () => {
   return {
     regions, categories, markers, currentRegion, selectedCategory,
     fetchRegions, fetchCategories, fetchMarkers, setRegion, setCategory,
+    addMarker, editMarker, removeMarker,
   }
 })

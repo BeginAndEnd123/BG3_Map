@@ -30,6 +30,7 @@ def seed():
     admin = User(
         username="admin",
         password_hash=hash_password("admin123"),
+        is_admin=1,
     )
     db.add(admin)
 

@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     avatar = Column(String(255))
+    is_admin = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.now)
 
 
