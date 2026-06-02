@@ -309,6 +309,7 @@ onMounted(async () => {
 .map-wrapper {
   flex: 1;
   position: relative;
+  background: #000;
 }
 
 .loading-mask {

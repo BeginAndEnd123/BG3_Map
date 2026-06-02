@@ -73,5 +73,6 @@ watch(() => props.markers, () => updateMarkers(), { deep: true })
 </script>
 
 <style scoped>
-#map-container { width: 100%; height: 100%; }
+#map-container { width: 100%; height: 100%; background: #000; }
+#map-container :deep(.leaflet-container) { background: #000; }
 </style>
