@@ -20,7 +20,7 @@
 | 认证 | JWT (python-jose + passlib) | - |
 
 ## 文档索引
-
+git@github.com:BeginAndEnd123/BG3_Map.git
 | 文档 | 说明 |
 |------|------|
 | [PRD.docx](项目相关报告以及截图/PRD.docx) | 产品需求文档 |
@@ -344,10 +344,4 @@ npm install
 npm run dev
 ```
 
-### 5. 访问
 
-| 页面 | 地址 |
-|------|------|
-| 前端页面 | http://localhost:5173 |
-| API 文档 (Swagger) | http://localhost:8000/docs |
-| API 文档 (ReDoc) | http://localhost:8000/redoc |
