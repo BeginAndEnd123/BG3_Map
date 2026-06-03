@@ -106,6 +106,12 @@ onMounted(() => {
   updatePickMode()
 })
 
+function flyTo(lat, lng, zoom) {
+  if (map) map.flyTo([lat, lng], zoom != null ? zoom : map.getZoom(), { duration: 0.5 })
+}
+
+defineExpose({ flyTo })
+
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
 watch(() => props.markers, () => updateMarkers(), { deep: true })
 watch(() => props.pickMode, () => updatePickMode())

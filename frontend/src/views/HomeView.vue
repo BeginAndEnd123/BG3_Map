@@ -40,8 +40,16 @@
           type="text"
           v-model="keyword"
           placeholder="输入标记名称..."
-          @input="loadMarkers"
+          @input="onSearchInput"
+          @focus="showSearchResults = true"
+          @blur="onSearchBlur"
         />
+        <ul v-if="showSearchResults && filteredMarkers.length > 0" class="search-list">
+          <li v-for="m in filteredMarkers" :key="m.id" @mousedown.prevent="onSearchSelect(m)">
+            <span class="sr-name">{{ m.name }}</span>
+            <span class="sr-region">{{ m.region?.name || '' }}</span>
+          </li>
+        </ul>
       </div>
 
       <div class="stats">
@@ -139,6 +147,7 @@ const editingMarker = ref(null)
 const selectedMapName = ref('')
 const recentMarkers = ref([])
 const pickMode = ref(false)
+const showSearchResults = ref(false)
 
 const DEFAULT_MAP = {
   1: '鹦鹉螺坠毁区域',
@@ -166,6 +175,28 @@ const selectedCategoryColor = computed(() => {
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.color || '#3388ff'
 })
+
+const filteredMarkers = computed(() => {
+  if (!keyword.value) return []
+  const kw = keyword.value.toLowerCase()
+  return mapStore.markers.filter(m => m.name.toLowerCase().includes(kw))
+})
+
+function onSearchInput() {
+  showSearchResults.value = true
+  loadMarkers()
+}
+
+function onSearchBlur() {
+  setTimeout(() => { showSearchResults.value = false }, 200)
+}
+
+function onSearchSelect(marker) {
+  showSearchResults.value = false
+  keyword.value = marker.name
+  selectedMarker.value = marker
+  mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord))
+}
 
 async function fetchMaps() {
   const region = mapStore.currentRegion
@@ -338,6 +369,9 @@ onMounted(async () => {
   font-size: 13px;
 }
 
+.search-box {
+  position: relative;
+}
 .search-box input {
   width: 100%;
   padding: 8px;
@@ -347,6 +381,29 @@ onMounted(async () => {
   color: #eee;
   font-size: 13px;
 }
+.search-list {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  background: #1a1a2e;
+  border: 1px solid #444;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.search-list li {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.search-list li:hover { background: #2a2a4e; }
+.sr-name { color: #eee; }
+.sr-region { color: #888; font-size: 11px; }
 
 .stats {
   margin-top: 20px;
