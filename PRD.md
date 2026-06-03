@@ -149,97 +149,68 @@
 
 ## 项目结构
 
-> 项目文件有新增时请同步更新此结构树。
-
 ```
 BG3_map/
-├── .gitattributes
-├── .gitignore
-├── DEVELOPMENT.md                 # 开发跟踪文档
-├── PRD.md                         # 产品需求文档
-├── README.md
-├── origin_3845393_146764.png
 ├── backend/
-│   ├── .env                       # 环境变量
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py              # FastAPI 应用入口
+│   │   ├── config.py            # 配置（数据库连接、JWT密钥等）
+│   │   ├── database.py          # 数据库连接与 Session 管理
+│   │   ├── models.py            # SQLAlchemy ORM 模型
+│   │   ├── schemas.py           # Pydantic 请求/响应模型
+│   │   ├── auth.py              # JWT 认证与密码哈希
+│   │   ├── routers/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py          # 认证路由
+│   │   │   ├── regions.py       # 区域路由
+│   │   │   ├── categories.py    # 分类路由
+│   │   │   └── markers.py       # 标记路由
+│   │   └── seed.py              # 初始数据填充（admin账号、区域、分类）
+│   ├── alembic/                 # 数据库迁移配置
 │   ├── alembic.ini
 │   ├── requirements.txt
-│   ├── alembic/                   # 数据库迁移
-│   │   ├── env.py
-│   │   ├── script.py.mako
-│   │   └── versions/
-│   │       └── 15a5faf78b3d_initial.py
-│   └── app/
-│       ├── __init__.py
-│       ├── main.py                 # FastAPI 应用入口
-│       ├── config.py               # 配置（数据库连接、JWT密钥等）
-│       ├── database.py             # 数据库连接与 Session 管理
-│       ├── models.py               # SQLAlchemy ORM 模型
-│       ├── schemas.py              # Pydantic 请求/响应模型
-│       ├── auth.py                 # JWT 认证与密码哈希
-│       ├── seed.py                 # 初始数据填充（admin账号、区域、分类）
-│       └── routers/
-│           ├── __init__.py
-│           ├── auth.py             # 认证路由
-│           ├── regions.py          # 区域路由
-│           ├── categories.py       # 分类路由
-│           ├── markers.py          # 标记路由
-│           └── maps.py             # 地图列表路由
+│   └── .env                     # 环境变量
 ├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── index.js         # axios 实例（含 JWT 拦截器）
+│   │   │   ├── auth.js          # 认证 API
+│   │   │   ├── regions.js       # 区域 API
+│   │   │   ├── categories.js    # 分类 API
+│   │   │   └── markers.js       # 标记 API
+│   │   ├── components/
+│   │   │   ├── MapContainer.vue  # 地图容器
+│   │   │   ├── MarkerPopup.vue   # 标记弹窗
+│   │   │   └── SidePanel.vue     # 侧边面板
+│   │   ├── views/
+│   │   │   ├── HomeView.vue      # 地图主页
+│   │   │   ├── LoginView.vue     # 登录页
+│   │   │   └── RegisterView.vue  # 注册页
+│   │   ├── stores/
+│   │   │   ├── auth.js           # 认证状态 (Pinia)
+│   │   │   └── map.js            # 地图状态 (Pinia)
+│   │   ├── router/
+│   │   │   └── index.js
+│   │   ├── App.vue
+│   │   ├── style.css
+│   │   └── main.js
 │   ├── index.html
 │   ├── vite.config.js
-│   ├── package.json
-│   ├── public/
-│   │   ├── favicon.svg
-│   │   └── icons/
-│   │       ├── waypoint.svg        # 传送点图标
-│   │       ├── monster.svg         # 怪物图标
-│   │       └── item.svg            # 道具图标
-│   └── src/
-│       ├── main.js
-│       ├── App.vue
-│       ├── style.css
-│       ├── api/
-│       │   ├── index.js            # axios 实例（含 JWT 拦截器）
-│       │   ├── auth.js             # 认证 API
-│       │   ├── regions.js          # 区域 API
-│       │   ├── categories.js       # 分类 API
-│       │   ├── markers.js          # 标记 API
-│       │   └── maps.js             # 地图列表 API
-│       ├── assets/
-│       │   └── icons/              # 资源图标（预留）
-│       ├── components/
-│       │   ├── MapContainer.vue     # 地图容器
-│       │   ├── MarkerPopup.vue      # 标记详情弹窗
-│       │   ├── MarkerForm.vue       # 标记新增/编辑表单
-│       │   ├── NavBar.vue           # 导航栏（用户信息+登出）
-│       │   └── SidePanel.vue        # 侧边面板
-│       ├── views/
-│       │   ├── HomeView.vue         # 地图主页
-│       │   ├── LoginView.vue        # 登录页
-│       │   ├── RegisterView.vue     # 注册页
-│       │   └── NotFoundView.vue     # 404 页面
-│       ├── stores/
-│       │   ├── auth.js              # 认证状态 (Pinia)
-│       │   └── map.js               # 地图状态 (Pinia)
-│       └── router/
-│           └── index.js
-├── Map/                            # 各章节地图源图片 (PNG)
-│   ├── chapter0/                   # 序章 — 鹦鹉螺号（2张）
-│   ├── chapter1/                   # 第一章 — 林地、地精营地、幽暗地域（23张）
-│   ├── chapter2/                   # 第二章 — 伊雷珂养育间（3张）
-│   ├── chapter3/                   # 第三章 — 月出之塔、暗夜之歌监狱（13张）
-│   └── chapter4/                   # 第四章 — 博德之门（44张）
-├── TileMap/                        # 瓦片地图（切图工具生成，68,548 tiles）
+│   └── package.json
+├── Map/                           # 各章节地图源图片 (PNG)
+│   ├── chapter0/                  # 序章 — 鹦鹉螺号
+│   ├── chapter1/                  # 第一章 — 林地、地精营地、幽暗地域
+│   ├── chapter2/                  # 第二章 — 伊雷珂养育间
+│   ├── chapter3/                  # 第三章 — 月出之塔、暗夜之歌监狱
+│   └── chapter4/                  # 第四章 — 博德之门
+├── TileMap/                       # 瓦片地图（切图工具生成，结构见下方说明）
 │   └── chapterX/地图名/{z}/{y}/{x}.png
 ├── tools/
-│   ├── tile_cutter.py              # 瓦片切图工具
-│   └── fix_admin_pw.py             # 管理员密码修复脚本
+│   └── tile_cutter.py             # 瓦片切图工具
 ├── sql/
-│   └── init.sql                    # 数据库初始化脚本
-└── 项目相关报告以及截图/
-    ├── PRD.docx
-    ├── 报告文件/                    # 课程设计报告
-    └── 截图/                       # 系统运行截图
+│   └── init.sql                   # 数据库初始化脚本
+└── README.md
 ```
 
 ## 切图工具
