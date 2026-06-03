@@ -45,6 +45,10 @@ CREATE TABLE IF NOT EXISTS markers (
   y_coord DECIMAL(10, 2) NOT NULL,
   screenshot TEXT,
   map_name VARCHAR(100) DEFAULT '',
+  target_region_id INT DEFAULT NULL,
+  target_map_name VARCHAR(100) DEFAULT '',
+  target_x DECIMAL(10, 2) DEFAULT NULL,
+  target_y DECIMAL(10, 2) DEFAULT NULL,
   created_at DATETIME DEFAULT NOW(),
   FOREIGN KEY (region_id) REFERENCES regions(id),
   FOREIGN KEY (category_id) REFERENCES categories(id)

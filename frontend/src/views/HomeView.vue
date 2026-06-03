@@ -86,6 +86,7 @@
         :pick-mode="pickMode"
         :temp-marker="tempMarker"
         @marker-click="onMarkerClick"
+        @marker-teleport="onMarkerTeleport"
         @map-pick="onMapPick"
       />
 
@@ -117,6 +118,7 @@
       v-if="showAddForm || editingMarker"
       :marker="editingMarker"
       :categories="mapStore.categories"
+      :regions="mapStore.regions"
       :region-id="currentRegionId"
       :initial-coords="pickerCoords"
       @close="closeForm"
@@ -292,6 +294,26 @@ function onMapChange() {
 
 function onMarkerClick(marker) {
   selectedMarker.value = marker
+}
+
+async function onMarkerTeleport(marker) {
+  if (!marker.target_region_id) return
+  const region = mapStore.regions.find(r => r.id === marker.target_region_id)
+  if (!region) return
+  currentRegionId.value = marker.target_region_id
+  mapStore.setRegion(region)
+  await fetchMaps()
+  await loadMarkers()
+  if (marker.target_map_name) {
+    const mapItem = mapStore.maps.find(m => m.name === marker.target_map_name)
+    if (mapItem) {
+      selectedMapName.value = mapItem.name
+      mapStore.setMap(mapItem)
+    }
+  }
+  await nextTick()
+  mapRef.value?.flyTo(Number(marker.target_x), Number(marker.target_y))
+  mapRef.value?.highlightMarker(Number(marker.target_x), Number(marker.target_y))
 }
 
 function onStartAdd() {

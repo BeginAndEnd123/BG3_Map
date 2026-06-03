@@ -15,7 +15,7 @@ const props = defineProps({
   tempMarker: { type: Object, default: null },
 })
 
-const emit = defineEmits(['marker-click', 'map-pick'])
+const emit = defineEmits(['marker-click', 'marker-teleport', 'map-pick'])
 const container = ref(null)
 
 let map = null
@@ -81,8 +81,13 @@ function updateMarkers() {
           className: '',
         })
     const marker = L.marker([m.x_coord, m.y_coord], { icon }).addTo(markerLayer)
-    marker.bindPopup(`<b>${m.name}</b><br>${m.description || ''}`)
-    marker.on('click', () => emit('marker-click', m))
+    marker.on('click', () => {
+      if (m.target_region_id) {
+        emit('marker-teleport', m)
+      } else {
+        emit('marker-click', m)
+      }
+    })
   })
 }
 

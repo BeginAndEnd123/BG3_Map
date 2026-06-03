@@ -34,6 +34,32 @@
           </div>
           <div v-if="uploadError" class="form-error">{{ uploadError }}</div>
         </label>
+
+        <div class="target-section">
+          <label class="target-toggle">
+            <input type="checkbox" v-model="hasTarget" />
+            传送目标（点击时跳转）
+          </label>
+          <template v-if="hasTarget">
+            <label>
+              目标区域
+              <select v-model="form.target_region_id" @change="onTargetRegionChange">
+                <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.name }}</option>
+              </select>
+            </label>
+            <label>
+              目标地图
+              <select v-model="form.target_map_name">
+                <option v-for="m in targetMaps" :key="m.name" :value="m.name">{{ m.name }}</option>
+              </select>
+            </label>
+            <div class="coord-row">
+              <label>目标 X <input type="number" step="0.01" v-model.number="form.target_x" /></label>
+              <label>目标 Y <input type="number" step="0.01" v-model.number="form.target_y" /></label>
+            </div>
+          </template>
+        </div>
+
         <p v-if="error" class="form-error">{{ error }}</p>
         <div class="form-actions">
           <button type="button" class="btn-cancel" @click="$emit('close')">取消</button>
@@ -47,12 +73,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import api from '../api/index'
+import { getMaps } from '../api/maps'
 
 const props = defineProps({
   marker: { type: Object, default: null },
   categories: { type: Array, default: () => [] },
+  regions: { type: Array, default: () => [] },
   regionId: { type: Number, default: null },
   initialCoords: { type: Object, default: null },
 })
@@ -65,6 +93,9 @@ const error = ref('')
 const uploading = ref(false)
 const uploadProgress = ref('')
 const uploadError = ref('')
+const targetMaps = ref([])
+const hasTarget = ref(false)
+const chapterKeys = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
 
 const form = reactive({
   name: '',
@@ -73,9 +104,13 @@ const form = reactive({
   x_coord: 0,
   y_coord: 0,
   images: [],
+  target_region_id: null,
+  target_map_name: '',
+  target_x: null,
+  target_y: null,
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (props.marker) {
     form.name = props.marker.name
     form.category_id = props.marker.category_id
@@ -83,6 +118,12 @@ onMounted(() => {
     form.x_coord = Number(props.marker.x_coord)
     form.y_coord = Number(props.marker.y_coord)
     form.images = props.marker.images || []
+    form.target_region_id = props.marker.target_region_id
+    form.target_map_name = props.marker.target_map_name || ''
+    form.target_x = props.marker.target_x
+    form.target_y = props.marker.target_y
+    hasTarget.value = !!props.marker.target_region_id
+    if (hasTarget.value) await fetchTargetMaps()
   } else if (props.initialCoords) {
     form.x_coord = props.initialCoords.x
     form.y_coord = props.initialCoords.y
@@ -114,6 +155,27 @@ async function onFileSelect(e) {
   }
   uploading.value = false
   uploadProgress.value = ''
+}
+
+async function fetchTargetMaps() {
+  if (!form.target_region_id) return
+  const region = props.regions.find(r => r.id === form.target_region_id)
+  if (!region) return
+  const chapterKey = chapterKeys[region.sort_order] || ''
+  if (!chapterKey) return
+  try {
+    const res = await getMaps({ chapter: chapterKey })
+    targetMaps.value = res.data
+  } catch {
+    targetMaps.value = []
+  }
+}
+
+async function onTargetRegionChange() {
+  form.target_map_name = ''
+  form.target_x = null
+  form.target_y = null
+  await fetchTargetMaps()
 }
 
 function removeImage(index) {
@@ -191,6 +253,11 @@ label textarea { resize: vertical; }
   font-size: 14px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
+.target-section { border-top: 1px solid #333; padding-top: 14px; margin-top: 14px; }
+.target-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #ffd700; }
+.target-toggle input { width: auto; margin: 0; }
+.coord-row { display: flex; gap: 10px; }
+.coord-row label { flex: 1; }
 .form-error { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .btn-cancel, .btn-submit {

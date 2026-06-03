@@ -60,6 +60,10 @@ class MarkerCreate(BaseModel):
     y_coord: float
     images: list[str] = []
     map_name: str = ''
+    target_region_id: Optional[int] = None
+    target_map_name: str = ''
+    target_x: Optional[float] = None
+    target_y: Optional[float] = None
 
 
 class MarkerUpdate(BaseModel):
@@ -71,6 +75,10 @@ class MarkerUpdate(BaseModel):
     y_coord: Optional[float] = None
     images: Optional[list[str]] = None
     map_name: Optional[str] = None
+    target_region_id: Optional[int] = None
+    target_map_name: Optional[str] = None
+    target_x: Optional[float] = None
+    target_y: Optional[float] = None
 
 
 def parse_images(raw: Optional[str]) -> list[str]:
@@ -92,6 +100,10 @@ class MarkerResponse(BaseModel):
     y_coord: float
     images: list[str] = []
     map_name: str = ''
+    target_region_id: Optional[int] = None
+    target_map_name: str = ''
+    target_x: Optional[float] = None
+    target_y: Optional[float] = None
     created_at: datetime
     region: Optional[RegionResponse] = None
     category: Optional[CategoryResponse] = None
