@@ -80,6 +80,7 @@
       <MapContainer
         ref="mapRef"
         :tile-url="tileUrl"
+        :max-zoom="mapMaxZoom"
         :markers="mapStore.markers"
         :categories="mapStore.categories"
         :pick-mode="pickMode"
@@ -164,6 +165,10 @@ const isAdmin = computed(() => authStore.user?.is_admin)
 
 const tileUrl = computed(() => {
   return mapStore.currentMap?.tile_url || ''
+})
+
+const mapMaxZoom = computed(() => {
+  return mapStore.currentMap?.max_zoom || 6
 })
 
 const selectedCategoryName = computed(() => {

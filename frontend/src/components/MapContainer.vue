@@ -8,6 +8,7 @@ import L from 'leaflet'
 
 const props = defineProps({
   tileUrl: { type: String, default: '' },
+  maxZoom: { type: Number, default: 6 },
   markers: { type: Array, default: () => [] },
   categories: { type: Array, default: () => [] },
   pickMode: { type: Boolean, default: false },
@@ -52,7 +53,7 @@ function updateTileLayer(url) {
   if (tileLayer) map.removeLayer(tileLayer)
   if (!url) return
   tileLayer = L.tileLayer(url, {
-    minZoom: 1, maxZoom: 6, noWrap: true,
+    minZoom: 1, maxZoom: props.maxZoom, noWrap: true,
   }).addTo(map)
 }
 

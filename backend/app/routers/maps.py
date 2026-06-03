@@ -24,9 +24,11 @@ def list_maps(chapter: str = ""):
         maps = []
         for d in sorted(dir_path.iterdir()):
             if d.is_dir():
+                zooms = [int(p.name) for p in d.iterdir() if p.is_dir() and p.name.isdigit()]
                 maps.append({
                     "name": d.name,
                     "tile_url": f"/TileMap/{chapter}/{d.name}/{{z}}/{{y}}/{{x}}.png",
+                    "max_zoom": max(zooms) if zooms else 6,
                 })
         return maps
 
@@ -36,9 +38,11 @@ def list_maps(chapter: str = ""):
             maps = []
             for d in sorted(ch.iterdir()):
                 if d.is_dir():
+                    zooms = [int(p.name) for p in d.iterdir() if p.is_dir() and p.name.isdigit()]
                     maps.append({
                         "name": d.name,
                         "tile_url": f"/TileMap/{ch.name}/{d.name}/{{z}}/{{y}}/{{x}}.png",
+                        "max_zoom": max(zooms) if zooms else 6,
                     })
             result[ch.name] = {
                 "chapter_name": CHAPTER_MAP.get(ch.name, ch.name),
