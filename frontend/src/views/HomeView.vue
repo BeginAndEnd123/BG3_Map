@@ -68,7 +68,10 @@
         <p v-else class="empty-text">暂无标记</p>
         <div v-if="recentTotal > 0" class="pagination">
           <button :disabled="recentPage <= 1" @click="onRecentPage(recentPage - 1)">‹</button>
-          <button v-for="p in recentPages" :key="p" :class="{ active: p === recentPage }" @click="onRecentPage(p)">{{ p }}</button>
+          <template v-for="p in recentPages" :key="p">
+            <button v-if="p !== '…'" :class="{ active: p === recentPage }" @click="onRecentPage(p)">{{ p }}</button>
+            <span v-else class="page-dots">…</span>
+          </template>
           <button :disabled="recentPage >= recentPages.length" @click="onRecentPage(recentPage + 1)">›</button>
         </div>
       </div>
@@ -161,7 +164,20 @@ const recentTotal = ref(0)
 const recentPageSize = 5
 const recentPages = computed(() => {
   const total = Math.ceil(recentTotal.value / recentPageSize)
-  return Array.from({ length: total }, (_, i) => i + 1)
+  const cur = recentPage.value
+  const pages = []
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (cur > 3) pages.push('…')
+    const start = Math.max(2, cur - 1)
+    const end = Math.min(total - 1, cur + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (cur < total - 2) pages.push('…')
+    pages.push(total)
+  }
+  return pages
 })
 const pickMode = ref(false)
 const showSearchResults = ref(false)
@@ -529,6 +545,7 @@ onMounted(async () => {
 }
 .pagination button:disabled { opacity: 0.3; cursor: default; }
 .pagination button.active { background: #ffd700; color: #1a1a2e; border-color: #ffd700; font-weight: bold; }
+.page-dots { color: #888; font-size: 13px; min-width: 20px; text-align: center; }
 .empty-text { font-size: 12px; color: #555; margin-top: 4px; }
 
 .map-wrapper {
