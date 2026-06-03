@@ -68,8 +68,8 @@
         <p v-else class="empty-text">暂无标记</p>
         <div v-if="recentTotal > 0" class="pagination">
           <button :disabled="recentPage <= 1" @click="onRecentPage(recentPage - 1)">‹</button>
-          <span>{{ recentPage }} / {{ Math.ceil(recentTotal / recentPageSize) }}</span>
-          <button :disabled="recentPage * recentPageSize >= recentTotal" @click="onRecentPage(recentPage + 1)">›</button>
+          <button v-for="p in recentPages" :key="p" :class="{ active: p === recentPage }" @click="onRecentPage(p)">{{ p }}</button>
+          <button :disabled="recentPage >= recentPages.length" @click="onRecentPage(recentPage + 1)">›</button>
         </div>
       </div>
 
@@ -159,6 +159,10 @@ const recentMarkers = ref([])
 const recentPage = ref(1)
 const recentTotal = ref(0)
 const recentPageSize = 5
+const recentPages = computed(() => {
+  const total = Math.ceil(recentTotal.value / recentPageSize)
+  return Array.from({ length: total }, (_, i) => i + 1)
+})
 const pickMode = ref(false)
 const showSearchResults = ref(false)
 const searchResults = ref([])
@@ -518,13 +522,13 @@ onMounted(async () => {
 .recent-markers li:hover { background: #2a2a4e; border-radius: 3px; }
 .recent-name { color: #eee; }
 .recent-region { color: #888; font-size: 11px; }
-.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 8px; }
 .pagination button {
   background: #2a2a4e; color: #eee; border: 1px solid #444;
-  padding: 2px 10px; border-radius: 3px; cursor: pointer; font-size: 14px;
+  min-width: 26px; height: 26px; border-radius: 3px; cursor: pointer; font-size: 13px;
 }
 .pagination button:disabled { opacity: 0.3; cursor: default; }
-.pagination span { font-size: 12px; color: #888; }
+.pagination button.active { background: #ffd700; color: #1a1a2e; border-color: #ffd700; font-weight: bold; }
 .empty-text { font-size: 12px; color: #555; margin-top: 4px; }
 
 .map-wrapper {
