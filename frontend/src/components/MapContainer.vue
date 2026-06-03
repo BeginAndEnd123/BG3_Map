@@ -109,7 +109,9 @@ onMounted(() => {
 })
 
 function flyTo(lat, lng, zoom) {
-  if (map) map.flyTo([lat, lng], zoom != null ? zoom : map.getZoom(), { duration: 0.5 })
+  if (!map) return
+  const targetZoom = zoom != null ? zoom : Math.max(1, map.getMaxZoom() - 1)
+  map.flyTo([lat, lng], targetZoom, { duration: 0.5 })
 }
 
 function highlightMarker(lat, lng) {
