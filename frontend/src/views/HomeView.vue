@@ -49,6 +49,16 @@
         <p>标记总数：{{ mapStore.markers.length }}</p>
       </div>
 
+      <div class="recent-markers" v-if="recentMarkers.length > 0">
+        <h3>最新添加</h3>
+        <ul>
+          <li v-for="m in recentMarkers" :key="m.id">
+            <span class="recent-name">{{ m.name }}</span>
+            <span class="recent-region">{{ m.region?.name || '' }}</span>
+          </li>
+        </ul>
+      </div>
+
       <button
         v-if="isAdmin"
         class="add-btn"
@@ -127,6 +137,7 @@ const loading = ref(false)
 const showAddForm = ref(false)
 const editingMarker = ref(null)
 const selectedMapName = ref('')
+const recentMarkers = ref([])
 const pickMode = ref(false)
 const tempMarker = ref(null)
 const pickerCoords = ref(null)
@@ -163,6 +174,15 @@ async function fetchMaps() {
     }
   } catch {
     console.error('加载地图列表失败')
+  }
+}
+
+async function fetchRecentMarkers() {
+  try {
+    const res = await getMarkers({ sort_by: 'created_at', limit: 5 })
+    recentMarkers.value = res.data
+  } catch {
+    console.error('加载最新标记失败')
   }
 }
 
@@ -267,6 +287,7 @@ onMounted(async () => {
     fetchMaps()
   }
   loadMarkers()
+  fetchRecentMarkers()
 })
 </script>
 
@@ -338,6 +359,16 @@ onMounted(async () => {
   cursor: pointer;
 }
 .add-btn:hover { background: #ffed4a; }
+
+.recent-markers { margin-top: 16px; padding-top: 12px; border-top: 1px solid #333; }
+.recent-markers ul { list-style: none; margin-top: 6px; }
+.recent-markers li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; font-size: 12px; border-bottom: 1px solid #2a2a2a;
+}
+.recent-markers li:last-child { border-bottom: none; }
+.recent-name { color: #eee; }
+.recent-region { color: #888; font-size: 11px; }
 
 .map-wrapper {
   flex: 1;

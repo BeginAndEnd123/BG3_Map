@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from ..database import get_db
 from ..models import Marker, Region, Category
@@ -14,15 +14,24 @@ def list_markers(
     region_id: Optional[int] = Query(None),
     category_id: Optional[int] = Query(None),
     keyword: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    limit: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Marker)
+    query = db.query(Marker).options(
+        joinedload(Marker.region),
+        joinedload(Marker.category),
+    )
     if region_id is not None:
         query = query.filter(Marker.region_id == region_id)
     if category_id is not None:
         query = query.filter(Marker.category_id == category_id)
     if keyword:
         query = query.filter(Marker.name.like(f"%{keyword}%"))
+    if sort_by == "created_at":
+        query = query.order_by(Marker.created_at.desc())
+    if limit is not None:
+        query = query.limit(limit)
     markers = query.all()
     return [MarkerResponse.model_validate(m) for m in markers]
 

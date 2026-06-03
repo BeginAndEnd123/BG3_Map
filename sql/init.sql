@@ -51,11 +51,11 @@ CREATE TABLE IF NOT EXISTS markers (
 
 -- 初始数据
 INSERT INTO regions (name, description, tile_url, sort_order) VALUES
-  ('序章', '鹦鹉螺式魔法船', '/TileMap/chapter0/{z}/{x}/{y}.png', 0),
-  ('第一章', '林地、地精营地、幽暗地域等', '/TileMap/chapter1/{z}/{x}/{y}.png', 1),
-  ('第二章', '伊雷珂养育间', '/TileMap/chapter2/{z}/{x}/{y}.png', 2),
-  ('第三章', '月出之塔、暗夜之歌监狱等', '/TileMap/chapter3/{z}/{x}/{y}.png', 3),
-  ('第四章', '博德之门', '/TileMap/chapter4/{z}/{x}/{y}.png', 4);
+  ('序章', '鹦鹉螺式魔法船', '/TileMap/chapter0/{z}/{y}/{x}.png', 0),
+  ('第一章', '林地、地精营地、幽暗地域等', '/TileMap/chapter1/{z}/{y}/{x}.png', 1),
+  ('第二章', '伊雷珂养育间', '/TileMap/chapter2/{z}/{y}/{x}.png', 2),
+  ('第三章', '月出之塔、暗夜之歌监狱等', '/TileMap/chapter3/{z}/{y}/{x}.png', 3),
+  ('第四章', '博德之门', '/TileMap/chapter4/{z}/{y}/{x}.png', 4);
 
 INSERT INTO categories (name, icon, color, sort_order) VALUES
   ('传送点', '/icons/waypoint.png', '#00BFFF', 0),
