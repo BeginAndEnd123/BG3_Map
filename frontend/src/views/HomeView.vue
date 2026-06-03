@@ -44,8 +44,8 @@
           @focus="showSearchResults = true"
           @blur="onSearchBlur"
         />
-        <ul v-if="showSearchResults && filteredMarkers.length > 0" class="search-list">
-          <li v-for="m in filteredMarkers" :key="m.id" @mousedown.prevent="onSearchSelect(m)">
+        <ul v-if="showSearchResults && searchResults.length > 0" class="search-list">
+          <li v-for="m in searchResults" :key="m.id" @mousedown.prevent="onSearchSelect(m)">
             <span class="sr-name">{{ m.name }}</span>
             <span class="sr-region">{{ m.region?.name || '' }}</span>
           </li>
@@ -148,6 +148,7 @@ const selectedMapName = ref('')
 const recentMarkers = ref([])
 const pickMode = ref(false)
 const showSearchResults = ref(false)
+const searchResults = ref([])
 
 const DEFAULT_MAP = {
   1: '鹦鹉螺坠毁区域',
@@ -176,15 +177,18 @@ const selectedCategoryColor = computed(() => {
   return cat?.color || '#3388ff'
 })
 
-const filteredMarkers = computed(() => {
-  if (!keyword.value) return []
-  const kw = keyword.value.toLowerCase()
-  return mapStore.markers.filter(m => m.name.toLowerCase().includes(kw))
-})
-
-function onSearchInput() {
+async function onSearchInput() {
   showSearchResults.value = true
-  loadMarkers()
+  if (!keyword.value) {
+    searchResults.value = []
+    return
+  }
+  try {
+    const res = await getMarkers({ keyword: keyword.value })
+    searchResults.value = res.data
+  } catch {
+    searchResults.value = []
+  }
 }
 
 function onSearchBlur() {
@@ -195,7 +199,8 @@ function onSearchSelect(marker) {
   showSearchResults.value = false
   keyword.value = marker.name
   selectedMarker.value = marker
-  mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord))
+  mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord), 5)
+  mapRef.value?.highlightMarker(Number(marker.x_coord), Number(marker.y_coord))
 }
 
 async function fetchMaps() {

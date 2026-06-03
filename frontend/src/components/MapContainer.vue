@@ -21,6 +21,7 @@ let map = null
 let tileLayer = null
 let markerLayer = null
 let pickLayer = null
+let highlightLayer = null
 let pickMarker = null
 
 const pickIcon = L.divIcon({
@@ -43,6 +44,7 @@ function initMap() {
     zoomControl: true,
   })
   markerLayer = L.layerGroup().addTo(map)
+  highlightLayer = L.layerGroup().addTo(map)
   pickLayer = L.layerGroup().addTo(map)
 }
 
@@ -110,7 +112,20 @@ function flyTo(lat, lng, zoom) {
   if (map) map.flyTo([lat, lng], zoom != null ? zoom : map.getZoom(), { duration: 0.5 })
 }
 
-defineExpose({ flyTo })
+function highlightMarker(lat, lng) {
+  if (!highlightLayer) return
+  highlightLayer.clearLayers()
+  const pulseIcon = L.divIcon({
+    html: '<div class="pulse-marker"></div>',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    className: '',
+  })
+  L.marker([lat, lng], { icon: pulseIcon, interactive: false }).addTo(highlightLayer)
+  setTimeout(() => highlightLayer.clearLayers(), 3000)
+}
+
+defineExpose({ flyTo, highlightMarker })
 
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
 watch(() => props.markers, () => updateMarkers(), { deep: true })
@@ -121,4 +136,17 @@ watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 <style scoped>
 #map-container { width: 100%; height: 100%; background: #000; }
 #map-container :deep(.leaflet-container) { background: #000; }
+</style>
+
+<style>
+.pulse-marker {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255, 215, 0, 0.3);
+  border: 3px solid #ffd700;
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
 </style>
