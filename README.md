@@ -42,7 +42,7 @@ graph TB
     end
 
     subgraph 后端["后端 — FastAPI (Port 8000)"]
-        Auth["认证模块<br/>JWT + bcrypt"]
+        Auth["JWT 认证层<br/>登录校验 / 管理员权限"]
         Routers["路由层"]
         AuthRouter["auth.py<br/>注册/登录/me"]
         RegionsRouter["regions.py<br/>区域查询"]
@@ -69,9 +69,9 @@ graph TB
     end
 
     前端 -->|"Axios HTTP (代理 /api /TileMap /static)"| 后端
-    AuthRouter --> Auth
-    MarkersRouter --> Auth
-    UploadRouter --> Auth
+    AuthRouter -->|"验证登录"--> Auth
+    MarkersRouter -.->|"需管理员权限"--> Auth
+    UploadRouter -.->|"需登录"--> Auth
     后端 --> ORM
     ORM --> DB
     TileMap --> FS1
