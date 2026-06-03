@@ -21,9 +21,9 @@ def seed():
     db.add_all(regions)
 
     categories = [
-        Category(name="传送点", icon="/icons/waypoint.png", color="#00BFFF", sort_order=0),
-        Category(name="怪物", icon="/icons/monster.png", color="#FF4444", sort_order=1),
-        Category(name="道具", icon="/icons/item.png", color="#FFD700", sort_order=2),
+        Category(name="传送点", icon="/icons/waypoint.svg", color="#00BFFF", sort_order=0),
+        Category(name="怪物", icon="/icons/monster.svg", color="#FF4444", sort_order=1),
+        Category(name="道具", icon="/icons/item.svg", color="#FFD700", sort_order=2),
     ]
     db.add_all(categories)
 

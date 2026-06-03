@@ -58,6 +58,6 @@ INSERT INTO regions (name, description, tile_url, sort_order) VALUES
   ('第四章', '博德之门', '/TileMap/chapter4/{z}/{y}/{x}.png', 4);
 
 INSERT INTO categories (name, icon, color, sort_order) VALUES
-  ('传送点', '/icons/waypoint.png', '#00BFFF', 0),
-  ('怪物', '/icons/monster.png', '#FF4444', 1),
-  ('道具', '/icons/item.png', '#FFD700', 2);
+  ('传送点', '/icons/waypoint.svg', '#00BFFF', 0),
+  ('怪物', '/icons/monster.svg', '#FF4444', 1),
+  ('道具', '/icons/item.svg', '#FFD700', 2);
