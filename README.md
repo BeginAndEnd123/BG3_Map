@@ -183,7 +183,10 @@ BG3_map/
 │           ├── regions.py          # 区域路由
 │           ├── categories.py       # 分类路由
 │           ├── markers.py          # 标记路由
-│           └── maps.py             # 地图列表路由
+│           ├── maps.py             # 地图列表路由
+│           └── upload.py           # 截图上传路由
+│   ├── static/                     # 用户上传文件
+│   │   └── screenshots/            # 标记截图
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.js

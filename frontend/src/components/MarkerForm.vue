@@ -23,8 +23,11 @@
           坐标已通过地图选取：{{ form.x_coord.toFixed(2) }}, {{ form.y_coord.toFixed(2) }}
         </div>
         <label>
-          截图 URL
-          <input v-model="form.screenshot" placeholder="可选截图链接" />
+          截图
+          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" @change="onFileSelect" />
+          <div v-if="uploading" class="upload-status">上传中...</div>
+          <img v-if="form.screenshot && !uploading" :src="form.screenshot" class="upload-preview" />
+          <div v-if="uploadError" class="form-error">{{ uploadError }}</div>
         </label>
         <p v-if="error" class="form-error">{{ error }}</p>
         <div class="form-actions">
@@ -40,6 +43,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
+import api from '../api/index'
 
 const props = defineProps({
   marker: { type: Object, default: null },
@@ -53,6 +57,8 @@ const emit = defineEmits(['close', 'submit'])
 const isEdit = !!props.marker
 const submitting = ref(false)
 const error = ref('')
+const uploading = ref(false)
+const uploadError = ref('')
 
 const form = reactive({
   name: '',
@@ -83,6 +89,23 @@ watch(() => props.initialCoords, (coords) => {
     form.y_coord = coords.y
   }
 }, { deep: true })
+
+async function onFileSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  uploading.value = true
+  uploadError.value = ''
+  const fd = new FormData()
+  fd.append('file', file)
+  try {
+    const res = await api.post('/upload', fd)
+    form.screenshot = res.data.url
+  } catch (err) {
+    uploadError.value = err.response?.data?.detail || '上传失败'
+  } finally {
+    uploading.value = false
+  }
+}
 
 async function onSubmit() {
   submitting.value = true
@@ -144,6 +167,8 @@ label textarea { resize: vertical; }
   background: #16213e;
   border-radius: 4px;
 }
+.upload-status { color: #888; font-size: 12px; margin-top: 4px; }
+.upload-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 4px; margin-top: 6px; }
 .form-error { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .btn-cancel, .btn-submit {

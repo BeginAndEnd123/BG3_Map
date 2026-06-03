@@ -2,7 +2,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from .routers import auth, regions, categories, markers, maps
+from .routers import auth, regions, categories, markers, maps, upload
 
 app = FastAPI(title="博德之门3 交互式地图", version="1.0.0")
 
@@ -22,6 +22,11 @@ app.include_router(regions.router)
 app.include_router(categories.router)
 app.include_router(markers.router)
 app.include_router(maps.router)
+app.include_router(upload.router)
+
+static_dir = Path(__file__).resolve().parent.parent / "static"
+static_dir.mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/")
