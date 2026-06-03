@@ -1,3 +1,4 @@
+/** 认证相关 API */
 import api from './index'
 
 export const login = (data) => api.post('/auth/login', data)

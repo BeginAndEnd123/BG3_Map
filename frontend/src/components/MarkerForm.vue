@@ -73,28 +73,37 @@
 </template>
 
 <script setup>
+/**
+ * 标记点表单 — 支持新增/编辑模式
+ *
+ * 功能：
+ * - 填写名称、分类、描述、坐标
+ * - 上传截图（逐个文件异步上传）
+ * - 配置传送目标（选择目标区域和地图，输入坐标）
+ * - 编辑模式下预填充已有数据
+ */
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import api from '../api/index'
 import { getMaps } from '../api/maps'
 
 const props = defineProps({
-  marker: { type: Object, default: null },
+  marker: { type: Object, default: null },           // 编辑时传入的标记对象
   categories: { type: Array, default: () => [] },
   regions: { type: Array, default: () => [] },
-  regionId: { type: Number, default: null },
-  initialCoords: { type: Object, default: null },
+  regionId: { type: Number, default: null },          // 当前区域 ID
+  initialCoords: { type: Object, default: null },     // 拾取模式选择的坐标
 })
 
 const emit = defineEmits(['close', 'submit'])
 
-const isEdit = !!props.marker
+const isEdit = !!props.marker                           // 是否为编辑模式
 const submitting = ref(false)
 const error = ref('')
 const uploading = ref(false)
 const uploadProgress = ref('')
 const uploadError = ref('')
-const targetMaps = ref([])
-const hasTarget = ref(false)
+const targetMaps = ref([])                              // 目标区域下的子地图列表
+const hasTarget = ref(false)                            // 是否启用传送目标配置
 const chapterKeys = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
 
 const form = reactive({
@@ -111,6 +120,7 @@ const form = reactive({
 })
 
 onMounted(async () => {
+  /** 编辑模式预填充已有数据，新增模式则使用拾取坐标 */
   if (props.marker) {
     form.name = props.marker.name
     form.category_id = props.marker.category_id
@@ -131,6 +141,7 @@ onMounted(async () => {
 })
 
 watch(() => props.initialCoords, (coords) => {
+  /** 拾取坐标变化时同步更新表单 */
   if (coords && !props.marker) {
     form.x_coord = coords.x
     form.y_coord = coords.y
@@ -138,6 +149,7 @@ watch(() => props.initialCoords, (coords) => {
 }, { deep: true })
 
 async function onFileSelect(e) {
+  /** 逐个上传选择的截图文件，追加到 images 列表 */
   const files = e.target.files
   if (!files || files.length === 0) return
   uploadError.value = ''
@@ -158,6 +170,7 @@ async function onFileSelect(e) {
 }
 
 async function fetchTargetMaps() {
+  /** 根据目标区域加载其下的子地图列表 */
   if (!form.target_region_id) return
   const region = props.regions.find(r => r.id === form.target_region_id)
   if (!region) return
@@ -172,6 +185,7 @@ async function fetchTargetMaps() {
 }
 
 async function onTargetRegionChange() {
+  /** 切换目标区域时重置地图和坐标选择 */
   form.target_map_name = ''
   form.target_x = null
   form.target_y = null
@@ -179,10 +193,12 @@ async function onTargetRegionChange() {
 }
 
 function removeImage(index) {
+  /** 从 images 列表中移除指定索引的图片 */
   form.images.splice(index, 1)
 }
 
 async function onSubmit() {
+  /** 提交表单，触发父组件处理创建或更新逻辑 */
   submitting.value = true
   error.value = ''
   try {

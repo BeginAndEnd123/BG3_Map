@@ -1,11 +1,17 @@
+"""
+地图路由 — 从 TileMap 目录扫描子地图列表及其最大缩放级别
+"""
+
 import os
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 router = APIRouter(prefix="/api/maps", tags=["地图"])
 
+# TileMap 瓦片根目录
 TILE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "TileMap"
 
+# 章节名称映射
 CHAPTER_MAP = {
     "chapter0": "序章",
     "chapter1": "第一章",
@@ -17,6 +23,11 @@ CHAPTER_MAP = {
 
 @router.get("")
 def list_maps(chapter: str = ""):
+    """获取子地图列表
+
+    若指定 chapter 参数则只返回该章节的地图；否则返回全部章节分组。
+    通过扫描瓦片目录自动计算每个子地图的最大 zoom 级别。
+    """
     if chapter:
         dir_path = TILE_DIR / chapter
         if not dir_path.is_dir():
@@ -32,6 +43,7 @@ def list_maps(chapter: str = ""):
                 })
         return maps
 
+    # 返回全部章节分组
     result = {}
     for ch in sorted(TILE_DIR.iterdir()):
         if ch.is_dir() and ch.name in CHAPTER_MAP:

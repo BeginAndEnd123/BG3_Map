@@ -1,3 +1,9 @@
+"""
+Pydantic 数据校验与序列化 Schema
+
+定义 API 请求体和响应体的数据结构，提供从 JSON 字符串解析图片列表的工具函数。
+"""
+
 import json
 from datetime import datetime
 from typing import Optional
@@ -5,16 +11,19 @@ from pydantic import BaseModel
 
 
 class UserRegister(BaseModel):
+    """用户注册请求"""
     username: str
     password: str
 
 
 class UserLogin(BaseModel):
+    """用户登录请求"""
     username: str
     password: str
 
 
 class UserResponse(BaseModel):
+    """用户信息响应"""
     id: int
     username: str
     avatar: Optional[str] = None
@@ -25,12 +34,14 @@ class UserResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
+    """JWT 令牌响应"""
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
 
 
 class RegionResponse(BaseModel):
+    """区域信息响应"""
     id: int
     name: str
     description: Optional[str] = None
@@ -42,6 +53,7 @@ class RegionResponse(BaseModel):
 
 
 class CategoryResponse(BaseModel):
+    """分类信息响应"""
     id: int
     name: str
     icon: Optional[str] = None
@@ -52,21 +64,23 @@ class CategoryResponse(BaseModel):
 
 
 class MarkerCreate(BaseModel):
+    """创建标记点请求"""
     region_id: int
     category_id: int
     name: str
     description: Optional[str] = None
     x_coord: float
     y_coord: float
-    images: list[str] = []
-    map_name: str = ''
-    target_region_id: Optional[int] = None
+    images: list[str] = []                            # 截图 URL 列表
+    map_name: str = ''                                # 所属子地图名
+    target_region_id: Optional[int] = None            # 传送目标区域
     target_map_name: str = ''
     target_x: Optional[float] = None
     target_y: Optional[float] = None
 
 
 class MarkerUpdate(BaseModel):
+    """更新标记点请求，所有字段可选"""
     region_id: Optional[int] = None
     category_id: Optional[int] = None
     name: Optional[str] = None
@@ -82,6 +96,10 @@ class MarkerUpdate(BaseModel):
 
 
 def parse_images(raw: Optional[str]) -> list[str]:
+    """将数据库中存储的 JSON 字符串解析为图片 URL 列表
+
+    兼容两种格式：JSON 数组和纯字符串。
+    """
     if not raw:
         return []
     try:
@@ -91,6 +109,7 @@ def parse_images(raw: Optional[str]) -> list[str]:
 
 
 class MarkerResponse(BaseModel):
+    """标记点响应，包含关联的区域和分类信息"""
     id: int
     region_id: int
     category_id: int

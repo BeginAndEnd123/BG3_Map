@@ -22,9 +22,14 @@
 </template>
 
 <script setup>
+/**
+ * 标记点详情弹窗
+ *
+ * 显示标记名称、分类、描述、坐标及截图画廊。
+ * 支持截图点击放大预览。
+ * 通过 actions 插槽接收外部操作按钮（如编辑/删除）。
+ */
 import { ref, computed } from 'vue'
-
-
 
 const props = defineProps({
   marker: { type: Object, default: null },
@@ -34,7 +39,7 @@ const props = defineProps({
 
 defineEmits(['close'])
 
-const enlarged = ref(null)
+const enlarged = ref(null)                      // 当前放大的截图索引（null=未放大）
 const images = computed(() => props.marker?.images || [])
 </script>
 

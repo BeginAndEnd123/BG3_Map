@@ -1,3 +1,4 @@
+/** 标记点 CRUD API */
 import api from './index'
 
 export const getMarkers = (params) => api.get('/markers', { params })

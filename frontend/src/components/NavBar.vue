@@ -12,6 +12,9 @@
 </template>
 
 <script setup>
+/**
+ * 顶部导航栏 — 显示品牌名称和用户信息，提供登出按钮
+ */
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 

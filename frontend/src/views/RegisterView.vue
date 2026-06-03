@@ -16,6 +16,9 @@
 </template>
 
 <script setup>
+/**
+ * 注册页 — 用户名密码注册，成功后自动登录并跳转首页
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'

@@ -1,3 +1,4 @@
+/** 区域 API */
 import api from './index'
 
 export const getRegions = () => api.get('/regions')

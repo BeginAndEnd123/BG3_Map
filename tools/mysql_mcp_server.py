@@ -1,6 +1,13 @@
 """
 MySQL MCP Server
-通过 stdin/stdout 提供 MySQL 数据库操作能力。
+
+基于 JSON-RPC 2.0 协议，通过 stdin/stdout 提供 MySQL 数据库操作能力。
+可作为 MCP (Model Context Protocol) 工具接入 AI 客户端。
+
+提供的工具:
+- query: 执行任意 SQL
+- list_tables: 列出所有表
+- describe_table: 查看表结构
 """
 
 import json
@@ -19,20 +26,24 @@ DB_CONFIG = {
 
 
 def query(sql: str) -> list[dict]:
+    """执行 SQL 查询，自动提交写操作并返回结果集"""
     conn = pymysql.connect(**DB_CONFIG)
     try:
         with conn.cursor() as cur:
             cur.execute(sql)
             if cur.description:
+                # SELECT 类查询返回行数据
                 cols = [d[0] for d in cur.description]
                 rows = cur.fetchall()
                 return [dict(zip(cols, r)) for r in rows]
+            # INSERT/UPDATE/DELETE 类操作自动提交
             conn.commit()
             return [{"affected_rows": cur.rowcount}]
     finally:
         conn.close()
 
 
+# MCP 工具列表定义
 TOOLS = [
     {
         "name": "query",
@@ -65,6 +76,7 @@ TOOLS = [
 
 
 def handle_request(msg: dict) -> dict:
+    """处理 JSON-RPC 请求，分发到对应的工具函数"""
     req_id = msg.get("id")
     method = msg.get("method")
     params = msg.get("params", {})
@@ -104,6 +116,12 @@ def handle_request(msg: dict) -> dict:
 
 
 def main():
+    """MCP 主循环: stdin/stdout JSON-RPC 通信
+
+    1. 接收 initialize 初始化请求
+    2. 接收 initialized 通知
+    3. 进入消息处理循环
+    """
     initialize_msg = json.loads(sys.stdin.readline())
     if initialize_msg.get("method") == "initialize":
         resp = {
@@ -118,9 +136,10 @@ def main():
         sys.stdout.write(json.dumps(resp) + "\n")
         sys.stdout.flush()
 
-        # notified
+        # 接收 initialized 通知 (该行无需处理内容)
         sys.stdin.readline()
 
+    # 主消息循环
     while True:
         line = sys.stdin.readline()
         if not line:

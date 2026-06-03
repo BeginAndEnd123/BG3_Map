@@ -141,6 +141,16 @@
 </template>
 
 <script setup>
+/**
+ * 主页 — 博德之门3 交互式地图核心视图
+ *
+ * 组装侧边面板（区域选择、地图切换、分类筛选、搜索、最新标记列表）
+ * 与 Leaflet 地图容器，提供完整的交互流程：
+ * - 区域/子地图切换后重新加载标记点
+ * - 标记点点击显示详情弹窗
+ * - 传送标记支持跳转到其他区域/地图
+ * - 管理员可新增/编辑/删除标记（含坐标拾取模式）
+ */
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
@@ -153,20 +163,22 @@ import MarkerForm from '../components/MarkerForm.vue'
 
 const mapStore = useMapStore()
 const authStore = useAuthStore()
-const mapRef = ref(null)
-const currentRegionId = ref(null)
-const selectedCategoryIds = ref([])
-const keyword = ref('')
-const selectedMarker = ref(null)
+const mapRef = ref(null)                               // MapContainer 组件引用
+const currentRegionId = ref(null)                       // 当前选中的区域 ID
+const selectedCategoryIds = ref([])                     // 分类筛选 (多选)
+const keyword = ref('')                                 // 搜索关键词
+const selectedMarker = ref(null)                        // 当前选中的标记点
 const loading = ref(false)
-const showAddForm = ref(false)
-const editingMarker = ref(null)
-const selectedMapName = ref('')
-const recentMarkers = ref([])
-const recentPage = ref(1)
-const recentTotal = ref(0)
+const showAddForm = ref(false)                          // 是否显示新增表单
+const editingMarker = ref(null)                         // 编辑中的标记点
+const selectedMapName = ref('')                        // 当前选中的子地图名
+const recentMarkers = ref([])                           // "最新添加" 列表
+const recentPage = ref(1)                              // 最新标记分页页码
+const recentTotal = ref(0)                             // 最新标记总数
 const recentPageSize = 5
-const gotoPage = ref(1)
+const gotoPage = ref(1)                                // 跳转页输入
+
+/** 分页器页码计算 (含省略号逻辑) */
 const recentPages = computed(() => {
   const total = Math.ceil(recentTotal.value / recentPageSize)
   const cur = recentPage.value
@@ -184,18 +196,19 @@ const recentPages = computed(() => {
   }
   return pages
 })
-const pickMode = ref(false)
-const showSearchResults = ref(false)
-const searchResults = ref([])
+const pickMode = ref(false)                            // 是否处于坐标拾取模式
+const showSearchResults = ref(false)                    // 是否显示搜索下拉
+const searchResults = ref([])                          // 搜索结果
 
+// 各章节 sort_order 对应的默认子地图名
 const DEFAULT_MAP = {
   1: '鹦鹉螺坠毁区域',
   2: '瑰晨修道院',
   3: '幽影诅咒之地',
   4: '飞龙关',
 }
-const tempMarker = ref(null)
-const pickerCoords = ref(null)
+const tempMarker = ref(null)                            // 拾取模式中的临时标记
+const pickerCoords = ref(null)                          // 拾取的坐标
 
 const isAdmin = computed(() => authStore.user?.is_admin)
 
@@ -208,18 +221,21 @@ const mapMaxZoom = computed(() => {
 })
 
 const selectedCategoryName = computed(() => {
+  /** 当前选中标记的分类名称 */
   if (!selectedMarker.value) return ''
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.name || ''
 })
 
 const selectedCategoryColor = computed(() => {
+  /** 当前选中标记的分类颜色 */
   if (!selectedMarker.value) return '#3388ff'
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.color || '#3388ff'
 })
 
 async function onSearchInput() {
+  /** 输入关键词时实时搜索标记 */
   showSearchResults.value = true
   if (!keyword.value) {
     searchResults.value = []
@@ -234,10 +250,12 @@ async function onSearchInput() {
 }
 
 function onSearchBlur() {
+  /** 搜索框失焦时延迟关闭下拉 (给点击事件响应时间) */
   setTimeout(() => { showSearchResults.value = false }, 200)
 }
 
 async function onSearchSelect(marker) {
+  /** 选中搜索结果：切换区域/地图，飞向标记位置并高亮 */
   showSearchResults.value = false
   keyword.value = marker.name
   selectedMarker.value = marker
@@ -262,6 +280,7 @@ async function onSearchSelect(marker) {
 }
 
 async function fetchMaps() {
+  /** 根据当前区域加载子地图列表，优先选中默认地图 */
   const region = mapStore.currentRegion
   if (!region) return
   const chapterKey = mapStore.getChapterKey(region.sort_order)
@@ -281,6 +300,7 @@ async function fetchMaps() {
 }
 
 async function fetchRecentMarkers() {
+  /** 加载最新添加标记列表 (分页) */
   try {
     const [res, countRes] = await Promise.all([
       getMarkers({ sort_by: 'created_at', limit: recentPageSize, offset: (recentPage.value - 1) * recentPageSize }),
@@ -294,6 +314,7 @@ async function fetchRecentMarkers() {
 }
 
 function onRecentClick(marker) {
+  /** 点击最新标记列表项 — 等同于搜索选中 */
   keyword.value = marker.name
   onSearchSelect(marker)
 }
@@ -305,6 +326,7 @@ function onRecentPage(page) {
 }
 
 function onGotoPage() {
+  /** 分页跳转输入 */
   const max = Math.ceil(recentTotal.value / recentPageSize)
   let p = Number(gotoPage.value)
   if (isNaN(p) || p < 1) p = 1
@@ -313,6 +335,7 @@ function onGotoPage() {
 }
 
 async function loadMarkers() {
+  /** 按当前区域、地图和分类筛选加载标记点 */
   loading.value = true
   try {
     const params = { region_id: currentRegionId.value, map_name: selectedMapName.value }
@@ -331,6 +354,7 @@ async function loadMarkers() {
 }
 
 async function onRegionChange() {
+  /** 切换区域下拉框 — 重置视图、加载新区域的地图和标记 */
   const region = mapStore.regions.find((r) => r.id === currentRegionId.value)
   if (region) {
     mapStore.setRegion(region)
@@ -342,6 +366,7 @@ async function onRegionChange() {
 }
 
 function onMapChange() {
+  /** 切换子地图 — 重置视图并重新加载标记 */
   const mapItem = mapStore.maps.find(m => m.name === selectedMapName.value)
   if (mapItem) {
     mapStore.setMap(mapItem)
@@ -351,10 +376,12 @@ function onMapChange() {
 }
 
 function onMarkerClick(marker) {
+  /** 点击普通标记点 — 显示详情弹窗 */
   selectedMarker.value = marker
 }
 
 async function onMarkerTeleport(marker) {
+  /** 点击传送标记 — 跳转到目标区域/地图并高亮目标坐标 */
   if (!marker.target_region_id) return
   const region = mapStore.regions.find(r => r.id === marker.target_region_id)
   if (!region) return
@@ -375,6 +402,7 @@ async function onMarkerTeleport(marker) {
 }
 
 function onStartAdd() {
+  /** 管理员进入坐标拾取模式，准备新增标记 */
   pickMode.value = true
   tempMarker.value = { x: 0, y: 0 }
   pickerCoords.value = null
@@ -382,17 +410,20 @@ function onStartAdd() {
 }
 
 function onMapPick(coords) {
+  /** 地图上拖拽拾取坐标 */
   tempMarker.value = coords
   pickerCoords.value = coords
 }
 
 function onConfirmPosition() {
+  /** 确认拾取位置，打开新增表单 */
   if (!tempMarker.value) return
   pickerCoords.value = { ...tempMarker.value }
   showAddForm.value = true
 }
 
 function closeForm() {
+  /** 关闭表单，退出拾取模式 */
   showAddForm.value = false
   editingMarker.value = null
   pickMode.value = false
@@ -401,11 +432,13 @@ function closeForm() {
 }
 
 function onEditMarker(marker) {
+  /** 编辑标记 — 深拷贝后打开编辑表单 */
   editingMarker.value = { ...marker }
   selectedMarker.value = null
 }
 
 async function onFormSubmit(data) {
+  /** 表单提交：根据模式执行创建或更新 */
   try {
     data.map_name = selectedMapName.value
     if (editingMarker.value) {
@@ -421,6 +454,7 @@ async function onFormSubmit(data) {
 }
 
 async function onDeleteMarker(id) {
+  /** 删除标记点，刷新最新列表 */
   if (!confirm('确认删除该标记？')) return
   try {
     await mapStore.removeMarker(id)
@@ -432,6 +466,7 @@ async function onDeleteMarker(id) {
 }
 
 onMounted(async () => {
+  /** 页面挂载：加载区域和分类，默认选中第一个区域 */
   await Promise.all([
     mapStore.fetchRegions(),
     mapStore.fetchCategories(),

@@ -1,8 +1,12 @@
 """
 瓦片地图切图工具
+
 将 Map/ 目录下的 PNG 源图按章节切割为 Leaflet CRS.Simple 瓦片。
 图片尺寸不足时会居中补全透明像素，使其达到 2^n × 256 标准尺寸后再切片。
 支持多进程并行处理。
+
+用法:
+    python tools/tile_cutter.py [--input Map/] [--output TileMap/] [--min-zoom 1] [--workers 4]
 """
 
 import argparse
@@ -18,18 +22,28 @@ except ImportError:
     print("请先安装 Pillow: pip install Pillow")
     sys.exit(1)
 
+# 禁用 Pillow 尺寸限制，大图片可能超过默认限制
 Image.MAX_IMAGE_PIXELS = None
 
 TILE_SIZE = 256
 
 
 def calc_zoom(width: int, height: int) -> int:
+    """根据图片尺寸计算所需的最大 zoom 级别
+
+    zoom = ceil(log2(max(width, height) / 256))
+    确保每个 zoom 级别的瓦片网格能完全覆盖图片。
+    """
     max_dim = max(width, height)
     z = math.ceil(math.log2(max_dim / TILE_SIZE))
     return max(z, 1)
 
 
 def pad_to_canvas(img: Image.Image, canvas_size: int) -> Image.Image:
+    """将图片居中放置到透明画布上
+
+    canvas_size 必须是 2^zoom * 256 的正方形尺寸。
+    """
     canvas = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
     x_offset = (canvas_size - img.width) // 2
     y_offset = (canvas_size - img.height) // 2
@@ -38,6 +52,7 @@ def pad_to_canvas(img: Image.Image, canvas_size: int) -> Image.Image:
 
 
 def slice_image(canvas: Image.Image, zoom: int, output_dir: Path) -> int:
+    """按 256x256 瓦片切割画布，保存到 output_dir/zoom/y/x.png"""
     grid_size = 2 ** zoom
     tile_size = TILE_SIZE
     count = 0
@@ -54,12 +69,18 @@ def slice_image(canvas: Image.Image, zoom: int, output_dir: Path) -> int:
 
 
 def _process_one(args_tuple: tuple) -> tuple:
-    """进程池工作函数 (独立函数以支持 pickle)"""
+    """进程池工作函数 — 处理单张地图
+
+    因为 ProcessPoolExecutor 需要可 pickle 的对象，此函数必须是模块级。
+
+    返回: (地图名, 最大zoom, 生成瓦片总数)
+    """
     src_path_str, chapter, base_output_str, min_zoom = args_tuple
     src_path = Path(src_path_str)
     base_output = Path(base_output_str)
     map_name = src_path.stem
 
+    # 打开图片并转为 RGBA
     img = Image.open(src_path).convert("RGBA")
     w, h = img.size
     z = calc_zoom(w, h)
@@ -71,6 +92,7 @@ def _process_one(args_tuple: tuple) -> tuple:
     out_dir = base_output / chapter / map_name
     total_tiles = 0
 
+    # 生成从 min_zoom 到最大 zoom 的所有缩放级别
     for zoom_level in range(min_zoom, z + 1):
         scale = 2 ** (zoom_level - z)
         if scale == 1:
@@ -104,6 +126,7 @@ def main():
         print(f"错误: 输入目录不存在: {input_dir}")
         sys.exit(1)
 
+    # 扫描章节目录
     chapters = sorted(
         d for d in input_dir.iterdir()
         if d.is_dir() and d.name.startswith("chapter") and (
@@ -114,6 +137,7 @@ def main():
         print("错误: 未找到章节目录 (chapter0 ~ chapter4)")
         sys.exit(1)
 
+    # 收集待处理任务
     tasks = []
     skipped = 0
     for chapter_dir in chapters:
@@ -139,6 +163,7 @@ def main():
     print(f"缩放范围: zoom {args.min_zoom} ~ auto")
     print("=" * 60)
 
+    # 多进程并行切图
     workers = args.workers or min(os.cpu_count() or 4, total_images)
     grand_tiles = 0
     completed = 0

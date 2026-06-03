@@ -1,3 +1,7 @@
+"""
+标记点路由 — CRUD 操作，支持多条件筛选、分页和截图关联删除
+"""
+
 import json
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -10,10 +14,15 @@ from ..auth import require_admin
 
 router = APIRouter(prefix="/api/markers", tags=["标记"])
 
+# 截图文件存储目录
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "static" / "screenshots"
 
 
 def _to_response(marker: Marker) -> dict:
+    """将 ORM Marker 对象转换为可用于 MarkerResponse 校验的字典
+
+    处理 screenshot 字段 (JSON 字符串 -> URL 列表) 并附加关联的 region/category 对象。
+    """
     data = {c.name: getattr(marker, c.name) for c in marker.__table__.columns}
     data['images'] = parse_images(data.pop('screenshot', None))
     data['region'] = marker.region
@@ -32,9 +41,10 @@ def list_markers(
     offset: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
+    """查询标记点列表，支持按区域/分类/关键词/地图名筛选，以及分页和排序"""
     query = db.query(Marker).options(
-        joinedload(Marker.region),
-        joinedload(Marker.category),
+        joinedload(Marker.region),      # 预加载关联的区域
+        joinedload(Marker.category),     # 预加载关联的分类
     )
     if region_id is not None:
         query = query.filter(Marker.region_id == region_id)
@@ -62,6 +72,7 @@ def count_markers(
     map_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
+    """统计满足筛选条件的标记点总数 (用于分页)"""
     query = db.query(Marker)
     if region_id is not None:
         query = query.filter(Marker.region_id == region_id)
@@ -76,6 +87,7 @@ def count_markers(
 
 @router.get("/{marker_id}", response_model=MarkerResponse)
 def get_marker(marker_id: int, db: Session = Depends(get_db)):
+    """获取单个标记点详情"""
     marker = db.query(Marker).options(
         joinedload(Marker.region),
         joinedload(Marker.category),
@@ -91,6 +103,10 @@ def create_marker(
     db: Session = Depends(get_db),
     _=Depends(require_admin),
 ):
+    """创建新标记点 (需要管理员权限)
+
+    images 列表序列化为 JSON 字符串存入 screenshot 字段。
+    """
     payload = data.model_dump(exclude={'images'})
     marker = Marker(**payload, screenshot=json.dumps(data.images, ensure_ascii=False))
     db.add(marker)
@@ -106,6 +122,10 @@ def update_marker(
     db: Session = Depends(get_db),
     _=Depends(require_admin),
 ):
+    """更新标记点 (需要管理员权限)
+
+    若更新了 images 字段，会自动清理不再引用的旧截图文件。
+    """
     marker = db.query(Marker).options(
         joinedload(Marker.region),
         joinedload(Marker.category),
@@ -117,6 +137,7 @@ def update_marker(
     if data.images is not None:
         old_urls = set(parse_images(marker.screenshot))
         new_urls = set(data.images)
+        # 删除被移除的旧截图文件
         for url in old_urls - new_urls:
             filename = url.rsplit("/", 1)[-1]
             filepath = UPLOAD_DIR / filename
@@ -129,6 +150,7 @@ def update_marker(
 
 
 def _delete_image_files(marker: Marker):
+    """辅助函数：删除标记点关联的所有截图文件"""
     urls = parse_images(marker.screenshot)
     for url in urls:
         filename = url.rsplit("/", 1)[-1]
@@ -143,6 +165,10 @@ def delete_marker(
     db: Session = Depends(get_db),
     _=Depends(require_admin),
 ):
+    """删除标记点 (需要管理员权限)
+
+    同时删除关联的截图文件，释放磁盘空间。
+    """
     marker = db.query(Marker).filter(Marker.id == marker_id).first()
     if not marker:
         raise HTTPException(status_code=404, detail="标记不存在")

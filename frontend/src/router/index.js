@@ -1,3 +1,8 @@
+/**
+ * Vue Router 路由配置
+ *
+ * 包含路由守卫：未登录用户只能访问登录/注册页，已登录用户自动跳转首页。
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -11,6 +16,7 @@ const routes = [
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
 ]
 
+// 无需登录即可访问的路由
 const WHITE_LIST = ['login', 'register']
 
 const router = createRouter({
@@ -18,10 +24,11 @@ const router = createRouter({
   routes,
 })
 
+// 全局前置守卫 — 未登录重定向到登录页
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
   if (WHITE_LIST.includes(to.name)) {
-    if (token) return next({ name: 'home' })
+    if (token) return next({ name: 'home' })   // 已登录则跳转首页
     return next()
   }
   if (!token) return next({ name: 'login' })

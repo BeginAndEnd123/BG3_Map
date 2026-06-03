@@ -1,10 +1,15 @@
+/**
+ * 认证状态管理 (Pinia)
+ *
+ * 管理用户 token 和用户信息，提供登录/注册/登出/自动恢复方法。
+ */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { login as apiLogin, register as apiRegister, getMe } from '../api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)
-  const token = ref(localStorage.getItem('token') || '')
+  const user = ref(null)                                     // 当前用户信息
+  const token = ref(localStorage.getItem('token') || '')     // JWT 令牌
 
   async function login(username, password) {
     const res = await apiLogin({ username, password })
@@ -21,6 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUser() {
+    /** 尝试用本地 token 恢复登录态，失败则登出 */
     if (!token.value) return
     try {
       const res = await getMe()

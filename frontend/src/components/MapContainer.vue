@@ -3,28 +3,39 @@
 </template>
 
 <script setup>
+/**
+ * Leaflet 地图容器组件
+ *
+ * 使用 CRS.Simple 坐标系渲染瓦片地图，支持：
+ * - 标记点渲染（含自定义图标和分类颜色）
+ * - 坐标拾取模式（管理员新增标记时拖拽定位）
+ * - 传送标记点高亮动画
+ * - 通过 defineExpose 暴露 flyTo/highlightMarker/resetView 方法
+ */
 import { ref, onMounted, watch } from 'vue'
 import L from 'leaflet'
 
 const props = defineProps({
-  tileUrl: { type: String, default: '' },
-  maxZoom: { type: Number, default: 6 },
-  markers: { type: Array, default: () => [] },
-  categories: { type: Array, default: () => [] },
-  pickMode: { type: Boolean, default: false },
-  tempMarker: { type: Object, default: null },
+  tileUrl: { type: String, default: '' },        // 瓦片加载 URL 模板
+  maxZoom: { type: Number, default: 6 },          // 最大缩放级别
+  markers: { type: Array, default: () => [] },    // 标记点列表
+  categories: { type: Array, default: () => [] }, // 分类列表 (含颜色和图标)
+  pickMode: { type: Boolean, default: false },    // 是否处于坐标拾取模式
+  tempMarker: { type: Object, default: null },    // 拾取模式中的临时标记位置
 })
 
 const emit = defineEmits(['marker-click', 'marker-teleport', 'map-pick'])
 const container = ref(null)
 
+// Leaflet 实例引用
 let map = null
-let tileLayer = null
-let markerLayer = null
-let pickLayer = null
-let highlightLayer = null
+let tileLayer = null              // 瓦片图层
+let markerLayer = null            // 标记点图层组
+let pickLayer = null              // 拾取模式图层组
+let highlightLayer = null         // 高亮动画图层组
 let pickMarker = null
 
+// 拾取模式下的标记图标
 const pickIcon = L.divIcon({
   html: `<div style="
     width: 20px; height: 20px; border-radius: 50%;
@@ -38,6 +49,7 @@ const pickIcon = L.divIcon({
 })
 
 function initMap() {
+  /** 初始化 Leaflet 地图实例，使用 CRS.Simple 坐标系 */
   map = L.map(container.value, {
     center: [0, 0],
     zoom: 2,
@@ -50,6 +62,7 @@ function initMap() {
 }
 
 function updateTileLayer(url) {
+  /** 切换瓦片图层 */
   if (tileLayer) map.removeLayer(tileLayer)
   if (!url) return
   tileLayer = L.tileLayer(url, {
@@ -58,16 +71,19 @@ function updateTileLayer(url) {
 }
 
 function resetView() {
+  /** 重置地图视图到原点 */
   if (map) map.setView([0, 0], 2, { animate: false })
 }
 
 function updateMarkers() {
+  /** 根据 props.markers 重新渲染所有标记点 */
   if (!markerLayer) return
   markerLayer.clearLayers()
   props.markers.forEach((m) => {
     const cat = props.categories.find((c) => c.id === m.category_id)
     const color = cat?.color || '#3388ff'
     const iconUrl = cat?.icon
+    // 优先使用分类 SVG 图标，否则用颜色圆点
     const icon = iconUrl
       ? L.icon({ iconUrl, iconSize: [24, 24], iconAnchor: [12, 12], className: '' })
       : L.divIcon({
@@ -81,6 +97,7 @@ function updateMarkers() {
           className: '',
         })
     const marker = L.marker([m.x_coord, m.y_coord], { icon }).addTo(markerLayer)
+    // 点击事件：有传送目标的标记触发 teleport，否则显示详情
     marker.on('click', () => {
       if (m.target_region_id) {
         emit('marker-teleport', m)
@@ -92,11 +109,13 @@ function updateMarkers() {
 }
 
 function updatePickMode() {
+  /** 切换拾取模式下的鼠标样式 */
   if (!map) return
   container.value.style.cursor = props.pickMode ? 'grab' : ''
 }
 
 function updateTempMarker() {
+  /** 更新拾取模式中的临时标记位置，支持拖拽 */
   if (!pickLayer) return
   pickLayer.clearLayers()
   if (props.tempMarker) {
@@ -118,12 +137,14 @@ onMounted(() => {
   updatePickMode()
 })
 
+/** 平滑飞行到指定坐标 */
 function flyTo(lat, lng, zoom) {
   if (!map) return
   const targetZoom = zoom != null ? zoom : Math.max(1, map.getMaxZoom() - 1)
   map.flyTo([lat, lng], targetZoom, { duration: 0.5 })
 }
 
+/** 在指定坐标显示脉冲高亮动画（3 秒后自动消失） */
 function highlightMarker(lat, lng) {
   if (!highlightLayer) return
   highlightLayer.clearLayers()
@@ -137,8 +158,10 @@ function highlightMarker(lat, lng) {
   setTimeout(() => highlightLayer.clearLayers(), 3000)
 }
 
+// 暴露给父组件调用的方法
 defineExpose({ flyTo, highlightMarker, resetView })
 
+// 监听 props 变化，自动更新地图
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
 watch(() => props.markers, () => updateMarkers(), { deep: true })
 watch(() => props.pickMode, () => updatePickMode())

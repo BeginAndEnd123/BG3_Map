@@ -5,7 +5,10 @@
 </template>
 
 <script setup>
-</script>
+/**
+ * 侧边面板容器 — 为左侧栏提供统一的样式和滚动支持
+ * 通过默认插槽接收子内容。
+ */
 
 <style scoped>
 .side-panel {

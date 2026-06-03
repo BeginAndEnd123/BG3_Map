@@ -6,6 +6,7 @@
   </div>
 </template>
 
+<!-- 简单 404 页面，无逻辑 -->
 <style scoped>
 .not-found {
   display: flex;
