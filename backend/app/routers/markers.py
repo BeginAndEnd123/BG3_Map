@@ -26,6 +26,7 @@ def list_markers(
     region_id: Optional[int] = Query(None),
     category_id: Optional[int] = Query(None),
     keyword: Optional[str] = Query(None),
+    map_name: Optional[str] = Query(None),
     sort_by: Optional[str] = Query(None),
     limit: Optional[int] = Query(None),
     db: Session = Depends(get_db),
@@ -40,6 +41,8 @@ def list_markers(
         query = query.filter(Marker.category_id == category_id)
     if keyword:
         query = query.filter(Marker.name.like(f"%{keyword}%"))
+    if map_name:
+        query = query.filter(Marker.map_name == map_name)
     if sort_by == "created_at":
         query = query.order_by(Marker.created_at.desc())
     if limit is not None:

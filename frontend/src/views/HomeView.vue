@@ -255,7 +255,7 @@ async function fetchRecentMarkers() {
 async function loadMarkers() {
   loading.value = true
   try {
-    const params = { region_id: currentRegionId.value }
+    const params = { region_id: currentRegionId.value, map_name: selectedMapName.value }
     if (selectedCategoryIds.value.length > 0) {
       params.category_id = selectedCategoryIds.value.join(',')
     }
@@ -286,6 +286,7 @@ function onMapChange() {
   if (mapItem) {
     mapStore.setMap(mapItem)
     mapRef.value?.resetView()
+    loadMarkers()
   }
 }
 
