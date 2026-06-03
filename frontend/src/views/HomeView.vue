@@ -57,14 +57,20 @@
         <p>标记总数：{{ mapStore.markers.length }}</p>
       </div>
 
-      <div class="recent-markers" v-if="recentMarkers.length > 0">
+      <div class="recent-markers">
         <h3>最新添加</h3>
-        <ul>
-          <li v-for="m in recentMarkers" :key="m.id">
+        <ul v-if="recentMarkers.length > 0">
+          <li v-for="m in recentMarkers" :key="m.id" @click="onRecentClick(m)">
             <span class="recent-name">{{ m.name }}</span>
             <span class="recent-region">{{ m.region?.name || '' }}</span>
           </li>
         </ul>
+        <p v-else class="empty-text">暂无标记</p>
+        <div v-if="recentTotal > recentPageSize" class="pagination">
+          <button :disabled="recentPage <= 1" @click="onRecentPage(recentPage - 1)">‹</button>
+          <span>{{ recentPage }} / {{ Math.ceil(recentTotal / recentPageSize) }}</span>
+          <button :disabled="recentPage * recentPageSize >= recentTotal" @click="onRecentPage(recentPage + 1)">›</button>
+        </div>
       </div>
 
       <button
@@ -132,7 +138,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
 import { getMaps } from '../api/maps'
-import { getMarkers } from '../api/markers'
+import { getMarkers, getMarkerCount } from '../api/markers'
 import SidePanel from '../components/SidePanel.vue'
 import MapContainer from '../components/MapContainer.vue'
 import MarkerPopup from '../components/MarkerPopup.vue'
@@ -150,6 +156,9 @@ const showAddForm = ref(false)
 const editingMarker = ref(null)
 const selectedMapName = ref('')
 const recentMarkers = ref([])
+const recentPage = ref(1)
+const recentTotal = ref(0)
+const recentPageSize = 10
 const pickMode = ref(false)
 const showSearchResults = ref(false)
 const searchResults = ref([])
@@ -247,11 +256,25 @@ async function fetchMaps() {
 
 async function fetchRecentMarkers() {
   try {
-    const res = await getMarkers({ sort_by: 'created_at', limit: 5 })
+    const [res, countRes] = await Promise.all([
+      getMarkers({ sort_by: 'created_at', limit: recentPageSize, offset: (recentPage.value - 1) * recentPageSize }),
+      getMarkerCount(),
+    ])
     recentMarkers.value = res.data
+    recentTotal.value = countRes.data.total
   } catch {
     console.error('加载最新标记失败')
   }
+}
+
+function onRecentClick(marker) {
+  keyword.value = marker.name
+  onSearchSelect(marker)
+}
+
+function onRecentPage(page) {
+  recentPage.value = page
+  fetchRecentMarkers()
 }
 
 async function loadMarkers() {
@@ -356,6 +379,7 @@ async function onFormSubmit(data) {
       await mapStore.addMarker(data)
     }
     closeForm()
+    fetchRecentMarkers()
   } catch {
     alert('操作失败，请检查权限')
   }
@@ -366,6 +390,7 @@ async function onDeleteMarker(id) {
   try {
     await mapStore.removeMarker(id)
     selectedMarker.value = null
+    fetchRecentMarkers()
   } catch {
     alert('删除失败，请检查权限')
   }
@@ -488,8 +513,18 @@ onMounted(async () => {
   padding: 4px 0; font-size: 12px; border-bottom: 1px solid #2a2a2a;
 }
 .recent-markers li:last-child { border-bottom: none; }
+.recent-markers li { cursor: pointer; }
+.recent-markers li:hover { background: #2a2a4e; border-radius: 3px; }
 .recent-name { color: #eee; }
 .recent-region { color: #888; font-size: 11px; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+.pagination button {
+  background: #2a2a4e; color: #eee; border: 1px solid #444;
+  padding: 2px 10px; border-radius: 3px; cursor: pointer; font-size: 14px;
+}
+.pagination button:disabled { opacity: 0.3; cursor: default; }
+.pagination span { font-size: 12px; color: #888; }
+.empty-text { font-size: 12px; color: #555; margin-top: 4px; }
 
 .map-wrapper {
   flex: 1;

@@ -29,6 +29,7 @@ def list_markers(
     map_name: Optional[str] = Query(None),
     sort_by: Optional[str] = Query(None),
     limit: Optional[int] = Query(None),
+    offset: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     query = db.query(Marker).options(
@@ -47,8 +48,30 @@ def list_markers(
         query = query.order_by(Marker.created_at.desc())
     if limit is not None:
         query = query.limit(limit)
+    if offset is not None:
+        query = query.offset(offset)
     markers = query.all()
     return [MarkerResponse.model_validate(_to_response(m)) for m in markers]
+
+
+@router.get("/count")
+def count_markers(
+    region_id: Optional[int] = Query(None),
+    category_id: Optional[int] = Query(None),
+    keyword: Optional[str] = Query(None),
+    map_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Marker)
+    if region_id is not None:
+        query = query.filter(Marker.region_id == region_id)
+    if category_id is not None:
+        query = query.filter(Marker.category_id == category_id)
+    if keyword:
+        query = query.filter(Marker.name.like(f"%{keyword}%"))
+    if map_name:
+        query = query.filter(Marker.map_name == map_name)
+    return {"total": query.count()}
 
 
 @router.get("/{marker_id}", response_model=MarkerResponse)
