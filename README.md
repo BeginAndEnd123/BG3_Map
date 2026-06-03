@@ -20,6 +20,64 @@
 | 认证 | JWT (python-jose + passlib) | - |
 
 
+## 系统架构
+
+```mermaid
+graph TB
+    subgraph 前端["前端 — Vue 3 SPA (Port 5173)"]
+        Router["路由 Vue Router"]
+        Store["状态管理 Pinia"]
+        Components["组件层"]
+        MapContainer["MapContainer.vue<br/>Leaflet CRS.Simple"]
+        SidePanel["SidePanel.vue<br/>筛选/搜索/统计"]
+        MarkerPopup["MarkerPopup.vue<br/>详情弹窗"]
+        MarkerForm["MarkerForm.vue<br/>创建/编辑表单"]
+        NavBar["NavBar.vue<br/>用户信息/登出"]
+        API["API 层 Axios<br/>(JWT Bearer Token)"]
+        Components --- MapContainer
+        Components --- SidePanel
+        Components --- MarkerPopup
+        Components --- MarkerForm
+        Components --- NavBar
+    end
+
+    subgraph 后端["后端 — FastAPI (Port 8000)"]
+        Auth["认证模块<br/>JWT + bcrypt"]
+        Routers["路由层"]
+        AuthRouter["auth.py<br/>注册/登录/me"]
+        RegionsRouter["regions.py<br/>区域查询"]
+        CategoriesRouter["categories.py<br/>分类查询"]
+        MarkersRouter["markers.py<br/>标记 CRUD"]
+        MapsRouter["maps.py<br/>地图列表"]
+        UploadRouter["upload.py<br/>截图上传"]
+        ORM["ORM SQLAlchemy"]
+        StaticFiles["静态文件挂载"]
+        TileMap["/TileMap<br/>瓦片地图"]
+        Static["/static<br/>上传截图"]
+        Routers --- AuthRouter
+        Routers --- RegionsRouter
+        Routers --- CategoriesRouter
+        Routers --- MarkersRouter
+        Routers --- MapsRouter
+        Routers --- UploadRouter
+    end
+
+    subgraph 存储["存储层"]
+        DB[("MySQL 8.0<br/>bg3_map")]
+        FS1["文件系统<br/>TileMap/ (97 张地图, 68,548 tiles)"]
+        FS2["文件系统<br/>static/screenshots/ (上传图片)"]
+    end
+
+    前端 -->|"Axios HTTP (代理 /api /TileMap /static)"| 后端
+    AuthRouter --> Auth
+    MarkersRouter --> Auth
+    UploadRouter --> Auth
+    后端 --> ORM
+    ORM --> DB
+    TileMap --> FS1
+    Static --> FS2
+```
+
 ## 功能需求
 
 ### 用户故事
