@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional
@@ -8,6 +9,8 @@ from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse, parse_images
 from ..auth import require_admin
 
 router = APIRouter(prefix="/api/markers", tags=["标记"])
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "static" / "screenshots"
 
 
 def _to_response(marker: Marker) -> dict:
@@ -86,10 +89,26 @@ def update_marker(
     for key, value in data.model_dump(exclude={'images'}, exclude_unset=True).items():
         setattr(marker, key, value)
     if data.images is not None:
+        old_urls = set(parse_images(marker.screenshot))
+        new_urls = set(data.images)
+        for url in old_urls - new_urls:
+            filename = url.rsplit("/", 1)[-1]
+            filepath = UPLOAD_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
         marker.screenshot = json.dumps(data.images, ensure_ascii=False)
     db.commit()
     db.refresh(marker)
     return MarkerResponse.model_validate(_to_response(marker))
+
+
+def _delete_image_files(marker: Marker):
+    urls = parse_images(marker.screenshot)
+    for url in urls:
+        filename = url.rsplit("/", 1)[-1]
+        filepath = UPLOAD_DIR / filename
+        if filepath.exists():
+            filepath.unlink()
 
 
 @router.delete("/{marker_id}", status_code=204)
@@ -101,5 +120,6 @@ def delete_marker(
     marker = db.query(Marker).filter(Marker.id == marker_id).first()
     if not marker:
         raise HTTPException(status_code=404, detail="标记不存在")
+    _delete_image_files(marker)
     db.delete(marker)
     db.commit()
