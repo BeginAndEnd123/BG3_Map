@@ -265,18 +265,23 @@ async function loadMarkers() {
   }
 }
 
-function onRegionChange() {
+async function onRegionChange() {
   const region = mapStore.regions.find((r) => r.id === currentRegionId.value)
   if (region) {
     mapStore.setRegion(region)
-    fetchMaps()
+    await fetchMaps()
     loadMarkers()
+    await nextTick()
+    mapRef.value?.resetView()
   }
 }
 
 function onMapChange() {
   const mapItem = mapStore.maps.find(m => m.name === selectedMapName.value)
-  if (mapItem) mapStore.setMap(mapItem)
+  if (mapItem) {
+    mapStore.setMap(mapItem)
+    mapRef.value?.resetView()
+  }
 }
 
 function onMarkerClick(marker) {

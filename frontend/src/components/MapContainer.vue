@@ -56,6 +56,10 @@ function updateTileLayer(url) {
   }).addTo(map)
 }
 
+function resetView() {
+  if (map) map.setView([0, 0], 2, { animate: false })
+}
+
 function updateMarkers() {
   if (!markerLayer) return
   markerLayer.clearLayers()
@@ -127,7 +131,7 @@ function highlightMarker(lat, lng) {
   setTimeout(() => highlightLayer.clearLayers(), 3000)
 }
 
-defineExpose({ flyTo, highlightMarker })
+defineExpose({ flyTo, highlightMarker, resetView })
 
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
 watch(() => props.markers, () => updateMarkers(), { deep: true })
