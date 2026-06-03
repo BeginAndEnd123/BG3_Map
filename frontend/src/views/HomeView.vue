@@ -139,6 +139,13 @@ const editingMarker = ref(null)
 const selectedMapName = ref('')
 const recentMarkers = ref([])
 const pickMode = ref(false)
+
+const DEFAULT_MAP = {
+  1: '鹦鹉螺坠毁区域',
+  2: '瑰晨修道院',
+  3: '幽影诅咒之地',
+  4: '飞龙关',
+}
 const tempMarker = ref(null)
 const pickerCoords = ref(null)
 
@@ -169,8 +176,10 @@ async function fetchMaps() {
     const res = await getMaps({ chapter: chapterKey })
     mapStore.maps = res.data
     if (res.data.length > 0) {
-      selectedMapName.value = res.data[0].name
-      mapStore.setMap(res.data[0])
+      const preferred = DEFAULT_MAP[region.sort_order]
+      const mapItem = res.data.find(m => m.name === preferred) || res.data[0]
+      selectedMapName.value = mapItem.name
+      mapStore.setMap(mapItem)
     }
   } catch {
     console.error('加载地图列表失败')
