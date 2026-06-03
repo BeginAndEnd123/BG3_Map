@@ -205,6 +205,7 @@ async function onSearchSelect(marker) {
     currentRegionId.value = marker.region_id
     mapStore.setRegion(region)
     await fetchMaps()
+    await loadMarkers()
     if (marker.map_name) {
       const mapItem = mapStore.maps.find(m => m.name === marker.map_name)
       if (mapItem) {
