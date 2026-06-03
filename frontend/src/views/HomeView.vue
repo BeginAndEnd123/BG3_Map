@@ -217,11 +217,11 @@ async function onSearchSelect(marker) {
   keyword.value = marker.name
   selectedMarker.value = marker
   const region = mapStore.regions.find(r => r.id === marker.region_id)
-  if (region && marker.region_id !== currentRegionId.value) {
+  const needSwitch = region && (marker.region_id !== currentRegionId.value || marker.map_name !== selectedMapName.value)
+  if (region && needSwitch) {
     currentRegionId.value = marker.region_id
     mapStore.setRegion(region)
     await fetchMaps()
-    await loadMarkers()
     if (marker.map_name) {
       const mapItem = mapStore.maps.find(m => m.name === marker.map_name)
       if (mapItem) {
@@ -229,6 +229,7 @@ async function onSearchSelect(marker) {
         mapStore.setMap(mapItem)
       }
     }
+    await loadMarkers()
   }
   await nextTick()
   mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord))
@@ -326,7 +327,6 @@ async function onMarkerTeleport(marker) {
   currentRegionId.value = marker.target_region_id
   mapStore.setRegion(region)
   await fetchMaps()
-  await loadMarkers()
   if (marker.target_map_name) {
     const mapItem = mapStore.maps.find(m => m.name === marker.target_map_name)
     if (mapItem) {
@@ -334,6 +334,7 @@ async function onMarkerTeleport(marker) {
       mapStore.setMap(mapItem)
     }
   }
+  await loadMarkers()
   await nextTick()
   mapRef.value?.flyTo(Number(marker.target_x), Number(marker.target_y))
   mapRef.value?.highlightMarker(Number(marker.target_x), Number(marker.target_y))

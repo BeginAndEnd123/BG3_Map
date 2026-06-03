@@ -20,7 +20,7 @@
           <textarea v-model="form.description" placeholder="可选描述" rows="3"></textarea>
         </label>
         <div class="coord-info">
-          坐标已通过地图选取：{{ form.x_coord.toFixed(2) }}, {{ form.y_coord.toFixed(2) }}
+          坐标：{{ form.x_coord.toFixed(2) }}, {{ form.y_coord.toFixed(2) }}
         </div>
         <label>
           截图
