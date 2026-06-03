@@ -75,7 +75,7 @@
           <button :disabled="recentPage >= recentPages.length" @click="onRecentPage(recentPage + 1)">›</button>
           <span class="page-goto">
             <input type="number" v-model.number="gotoPage" min="1" :max="recentPages.length" @keyup.enter="onGotoPage" />
-            <button @click="onGotoPage">跳</button>
+            <button @click="onGotoPage">跳转</button>
           </span>
         </div>
       </div>
