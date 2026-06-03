@@ -66,7 +66,7 @@
           </li>
         </ul>
         <p v-else class="empty-text">暂无标记</p>
-        <div v-if="recentTotal > recentPageSize" class="pagination">
+        <div v-if="recentTotal > 0" class="pagination">
           <button :disabled="recentPage <= 1" @click="onRecentPage(recentPage - 1)">‹</button>
           <span>{{ recentPage }} / {{ Math.ceil(recentTotal / recentPageSize) }}</span>
           <button :disabled="recentPage * recentPageSize >= recentTotal" @click="onRecentPage(recentPage + 1)">›</button>
@@ -158,7 +158,7 @@ const selectedMapName = ref('')
 const recentMarkers = ref([])
 const recentPage = ref(1)
 const recentTotal = ref(0)
-const recentPageSize = 10
+const recentPageSize = 5
 const pickMode = ref(false)
 const showSearchResults = ref(false)
 const searchResults = ref([])
