@@ -73,6 +73,10 @@
             <span v-else class="page-dots">…</span>
           </template>
           <button :disabled="recentPage >= recentPages.length" @click="onRecentPage(recentPage + 1)">›</button>
+          <span class="page-goto">
+            <input type="number" v-model.number="gotoPage" min="1" :max="recentPages.length" @keyup.enter="onGotoPage" />
+            <button @click="onGotoPage">跳</button>
+          </span>
         </div>
       </div>
 
@@ -162,6 +166,7 @@ const recentMarkers = ref([])
 const recentPage = ref(1)
 const recentTotal = ref(0)
 const recentPageSize = 5
+const gotoPage = ref(1)
 const recentPages = computed(() => {
   const total = Math.ceil(recentTotal.value / recentPageSize)
   const cur = recentPage.value
@@ -295,7 +300,16 @@ function onRecentClick(marker) {
 
 function onRecentPage(page) {
   recentPage.value = page
+  gotoPage.value = page
   fetchRecentMarkers()
+}
+
+function onGotoPage() {
+  const max = Math.ceil(recentTotal.value / recentPageSize)
+  let p = Number(gotoPage.value)
+  if (isNaN(p) || p < 1) p = 1
+  if (p > max) p = max
+  if (p !== recentPage.value) onRecentPage(p)
 }
 
 async function loadMarkers() {
@@ -546,6 +560,9 @@ onMounted(async () => {
 .pagination button:disabled { opacity: 0.3; cursor: default; }
 .pagination button.active { background: #ffd700; color: #1a1a2e; border-color: #ffd700; font-weight: bold; }
 .page-dots { color: #888; font-size: 13px; min-width: 20px; text-align: center; }
+.page-goto { display: flex; align-items: center; gap: 2px; margin-left: 6px; }
+.page-goto input { width: 36px; height: 24px; padding: 0 4px; border: 1px solid #444; border-radius: 3px; background: #16213e; color: #eee; font-size: 12px; text-align: center; }
+.page-goto button { min-width: 24px; height: 24px; font-size: 12px; background: #ffd700; color: #1a1a2e; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
 .empty-text { font-size: 12px; color: #555; margin-top: 4px; }
 
 .map-wrapper {
