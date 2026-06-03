@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
@@ -57,7 +58,7 @@ class MarkerCreate(BaseModel):
     description: Optional[str] = None
     x_coord: float
     y_coord: float
-    screenshot: Optional[str] = None
+    images: list[str] = []
 
 
 class MarkerUpdate(BaseModel):
@@ -67,7 +68,16 @@ class MarkerUpdate(BaseModel):
     description: Optional[str] = None
     x_coord: Optional[float] = None
     y_coord: Optional[float] = None
-    screenshot: Optional[str] = None
+    images: Optional[list[str]] = None
+
+
+def parse_images(raw: Optional[str]) -> list[str]:
+    if not raw:
+        return []
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return [raw]
 
 
 class MarkerResponse(BaseModel):
@@ -78,7 +88,7 @@ class MarkerResponse(BaseModel):
     description: Optional[str] = None
     x_coord: float
     y_coord: float
-    screenshot: Optional[str] = None
+    images: list[str] = []
     created_at: datetime
     region: Optional[RegionResponse] = None
     category: Optional[CategoryResponse] = None

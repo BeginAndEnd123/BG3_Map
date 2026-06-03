@@ -24,9 +24,14 @@
         </div>
         <label>
           截图
-          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" @change="onFileSelect" />
-          <div v-if="uploading" class="upload-status">上传中...</div>
-          <img v-if="form.screenshot && !uploading" :src="form.screenshot" class="upload-preview" />
+          <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" @change="onFileSelect" />
+          <div v-if="uploading" class="upload-status">上传中... ({{ uploadProgress }})</div>
+          <div v-if="form.images.length > 0" class="image-grid">
+            <div v-for="(url, i) in form.images" :key="i" class="image-item">
+              <img :src="url" class="upload-preview" />
+              <button type="button" class="img-remove" @click="removeImage(i)">&times;</button>
+            </div>
+          </div>
           <div v-if="uploadError" class="form-error">{{ uploadError }}</div>
         </label>
         <p v-if="error" class="form-error">{{ error }}</p>
@@ -58,6 +63,7 @@ const isEdit = !!props.marker
 const submitting = ref(false)
 const error = ref('')
 const uploading = ref(false)
+const uploadProgress = ref('')
 const uploadError = ref('')
 
 const form = reactive({
@@ -66,7 +72,7 @@ const form = reactive({
   description: '',
   x_coord: 0,
   y_coord: 0,
-  screenshot: '',
+  images: [],
 })
 
 onMounted(() => {
@@ -76,7 +82,7 @@ onMounted(() => {
     form.description = props.marker.description || ''
     form.x_coord = Number(props.marker.x_coord)
     form.y_coord = Number(props.marker.y_coord)
-    form.screenshot = props.marker.screenshot || ''
+    form.images = props.marker.images || []
   } else if (props.initialCoords) {
     form.x_coord = props.initialCoords.x
     form.y_coord = props.initialCoords.y
@@ -91,20 +97,27 @@ watch(() => props.initialCoords, (coords) => {
 }, { deep: true })
 
 async function onFileSelect(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  uploading.value = true
+  const files = e.target.files
+  if (!files || files.length === 0) return
   uploadError.value = ''
-  const fd = new FormData()
-  fd.append('file', file)
-  try {
-    const res = await api.post('/upload', fd)
-    form.screenshot = res.data.url
-  } catch (err) {
-    uploadError.value = err.response?.data?.detail || '上传失败'
-  } finally {
-    uploading.value = false
+  for (let i = 0; i < files.length; i++) {
+    uploading.value = true
+    uploadProgress.value = `${i + 1}/${files.length}`
+    const fd = new FormData()
+    fd.append('file', files[i])
+    try {
+      const res = await api.post('/upload', fd)
+      form.images.push(res.data.url)
+    } catch (err) {
+      uploadError.value = `${files[i].name} 上传失败`
+    }
   }
+  uploading.value = false
+  uploadProgress.value = ''
+}
+
+function removeImage(index) {
+  form.images.splice(index, 1)
 }
 
 async function onSubmit() {
@@ -168,7 +181,16 @@ label textarea { resize: vertical; }
   border-radius: 4px;
 }
 .upload-status { color: #888; font-size: 12px; margin-top: 4px; }
-.upload-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 4px; margin-top: 6px; }
+.image-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.image-item { position: relative; width: 80px; height: 80px; }
+.upload-preview { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.img-remove {
+  position: absolute; top: -6px; right: -6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #ff4444; color: #fff; border: none;
+  font-size: 14px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
 .form-error { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .btn-cancel, .btn-submit {

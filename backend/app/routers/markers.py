@@ -1,12 +1,21 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from ..database import get_db
 from ..models import Marker, Region, Category
-from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse
+from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse, parse_images
 from ..auth import require_admin
 
 router = APIRouter(prefix="/api/markers", tags=["标记"])
+
+
+def _to_response(marker: Marker) -> dict:
+    data = {c.name: getattr(marker, c.name) for c in marker.__table__.columns}
+    data['images'] = parse_images(data.pop('screenshot', None))
+    data['region'] = marker.region
+    data['category'] = marker.category
+    return data
 
 
 @router.get("", response_model=list[MarkerResponse])
@@ -33,15 +42,18 @@ def list_markers(
     if limit is not None:
         query = query.limit(limit)
     markers = query.all()
-    return [MarkerResponse.model_validate(m) for m in markers]
+    return [MarkerResponse.model_validate(_to_response(m)) for m in markers]
 
 
 @router.get("/{marker_id}", response_model=MarkerResponse)
 def get_marker(marker_id: int, db: Session = Depends(get_db)):
-    marker = db.query(Marker).filter(Marker.id == marker_id).first()
+    marker = db.query(Marker).options(
+        joinedload(Marker.region),
+        joinedload(Marker.category),
+    ).filter(Marker.id == marker_id).first()
     if not marker:
         raise HTTPException(status_code=404, detail="标记不存在")
-    return MarkerResponse.model_validate(marker)
+    return MarkerResponse.model_validate(_to_response(marker))
 
 
 @router.post("", response_model=MarkerResponse, status_code=201)
@@ -50,11 +62,12 @@ def create_marker(
     db: Session = Depends(get_db),
     _=Depends(require_admin),
 ):
-    marker = Marker(**data.model_dump())
+    payload = data.model_dump(exclude={'images'})
+    marker = Marker(**payload, screenshot=json.dumps(data.images, ensure_ascii=False))
     db.add(marker)
     db.commit()
     db.refresh(marker)
-    return MarkerResponse.model_validate(marker)
+    return MarkerResponse.model_validate(_to_response(marker))
 
 
 @router.put("/{marker_id}", response_model=MarkerResponse)
@@ -64,14 +77,19 @@ def update_marker(
     db: Session = Depends(get_db),
     _=Depends(require_admin),
 ):
-    marker = db.query(Marker).filter(Marker.id == marker_id).first()
+    marker = db.query(Marker).options(
+        joinedload(Marker.region),
+        joinedload(Marker.category),
+    ).filter(Marker.id == marker_id).first()
     if not marker:
         raise HTTPException(status_code=404, detail="标记不存在")
-    for key, value in data.model_dump(exclude_unset=True).items():
+    for key, value in data.model_dump(exclude={'images'}, exclude_unset=True).items():
         setattr(marker, key, value)
+    if data.images is not None:
+        marker.screenshot = json.dumps(data.images, ensure_ascii=False)
     db.commit()
     db.refresh(marker)
-    return MarkerResponse.model_validate(marker)
+    return MarkerResponse.model_validate(_to_response(marker))
 
 
 @router.delete("/{marker_id}", status_code=204)

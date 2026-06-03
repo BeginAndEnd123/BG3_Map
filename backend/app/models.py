@@ -50,7 +50,7 @@ class Marker(Base):
     description = Column(Text)
     x_coord = Column(DECIMAL(10, 2), nullable=False)
     y_coord = Column(DECIMAL(10, 2), nullable=False)
-    screenshot = Column(String(255))
+    screenshot = Column(Text)
     created_at = Column(DateTime, default=datetime.now)
 
     region = relationship("Region", back_populates="markers")

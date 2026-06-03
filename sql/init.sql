@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS markers (
   description TEXT,
   x_coord DECIMAL(10, 2) NOT NULL,
   y_coord DECIMAL(10, 2) NOT NULL,
-  screenshot VARCHAR(255),
+  screenshot TEXT,
   created_at DATETIME DEFAULT NOW(),
   FOREIGN KEY (region_id) REFERENCES regions(id),
   FOREIGN KEY (category_id) REFERENCES categories(id)
