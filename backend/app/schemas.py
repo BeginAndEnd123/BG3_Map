@@ -59,6 +59,7 @@ class MarkerCreate(BaseModel):
     x_coord: float
     y_coord: float
     images: list[str] = []
+    map_name: str = ''
 
 
 class MarkerUpdate(BaseModel):
@@ -69,6 +70,7 @@ class MarkerUpdate(BaseModel):
     x_coord: Optional[float] = None
     y_coord: Optional[float] = None
     images: Optional[list[str]] = None
+    map_name: Optional[str] = None
 
 
 def parse_images(raw: Optional[str]) -> list[str]:
@@ -89,6 +91,7 @@ class MarkerResponse(BaseModel):
     x_coord: float
     y_coord: float
     images: list[str] = []
+    map_name: str = ''
     created_at: datetime
     region: Optional[RegionResponse] = None
     category: Optional[CategoryResponse] = None

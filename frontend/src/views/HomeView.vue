@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
 import { getMaps } from '../api/maps'
@@ -196,10 +196,24 @@ function onSearchBlur() {
   setTimeout(() => { showSearchResults.value = false }, 200)
 }
 
-function onSearchSelect(marker) {
+async function onSearchSelect(marker) {
   showSearchResults.value = false
   keyword.value = marker.name
   selectedMarker.value = marker
+  const region = mapStore.regions.find(r => r.id === marker.region_id)
+  if (region && marker.region_id !== currentRegionId.value) {
+    currentRegionId.value = marker.region_id
+    mapStore.setRegion(region)
+    await fetchMaps()
+    if (marker.map_name) {
+      const mapItem = mapStore.maps.find(m => m.name === marker.map_name)
+      if (mapItem) {
+        selectedMapName.value = mapItem.name
+        mapStore.setMap(mapItem)
+      }
+    }
+  }
+  await nextTick()
   mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord), 5)
   mapRef.value?.highlightMarker(Number(marker.x_coord), Number(marker.y_coord))
 }
@@ -301,6 +315,7 @@ function onEditMarker(marker) {
 
 async function onFormSubmit(data) {
   try {
+    data.map_name = selectedMapName.value
     if (editingMarker.value) {
       await mapStore.editMarker(editingMarker.value.id, data)
     } else {

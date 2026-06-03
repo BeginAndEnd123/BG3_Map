@@ -51,6 +51,7 @@ class Marker(Base):
     x_coord = Column(DECIMAL(10, 2), nullable=False)
     y_coord = Column(DECIMAL(10, 2), nullable=False)
     screenshot = Column(Text)
+    map_name = Column(String(100), default='')
     created_at = Column(DateTime, default=datetime.now)
 
     region = relationship("Region", back_populates="markers")
