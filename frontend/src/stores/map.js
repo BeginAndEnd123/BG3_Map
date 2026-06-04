@@ -19,7 +19,6 @@ export const useMapStore = defineStore('map', () => {
   const maps = ref([])                 // 当前区域下的子地图列表
   const currentRegion = ref(null)      // 当前选中区域
   const currentMap = ref(null)         // 当前选中子地图
-  const selectedCategory = ref(null)   // 选中的分类筛选
 
   async function fetchRegions() {
     const res = await getRegions()
@@ -67,18 +66,14 @@ export const useMapStore = defineStore('map', () => {
     currentMap.value = mapItem
   }
 
-  function setCategory(categoryId) {
-    selectedCategory.value = categoryId
-  }
-
   /** 根据区域的 sort_order 获取对应的章节目录名 */
   function getChapterKey(regionSortOrder) {
     return CHAPTER_KEYS[regionSortOrder] || ''
   }
 
   return {
-    regions, categories, markers, maps, currentRegion, currentMap, selectedCategory,
-    fetchRegions, fetchCategories, fetchMarkers, setRegion, setMap, setCategory,
+    regions, categories, markers, maps, currentRegion, currentMap,
+    fetchRegions, fetchCategories, fetchMarkers, setRegion, setMap,
     addMarker, editMarker, removeMarker, getChapterKey,
   }
 })

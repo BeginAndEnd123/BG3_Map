@@ -66,6 +66,10 @@ CREATE TABLE IF NOT EXISTS markers (
   FOREIGN KEY (category_id) REFERENCES categories(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 标记点查询常用索引
+CREATE INDEX IF NOT EXISTS ix_markers_region_map_category ON markers (region_id, map_name, category_id);
+CREATE INDEX IF NOT EXISTS ix_markers_map_name ON markers (map_name);
+
 -- ============================================================
 -- 初始种子数据
 -- ============================================================

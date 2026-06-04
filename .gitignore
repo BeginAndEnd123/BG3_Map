@@ -34,3 +34,4 @@ id_rsa.pub
 # Temp
 *.tmp
 tools/fix_admin_pw.py
+tools/mysql_mcp_server.py

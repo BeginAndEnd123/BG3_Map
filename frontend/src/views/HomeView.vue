@@ -151,7 +151,7 @@
  * - 传送标记支持跳转到其他区域/地图
  * - 管理员可新增/编辑/删除标记（含坐标拾取模式）
  */
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
 import { getMaps } from '../api/maps'
@@ -366,12 +366,12 @@ async function onRegionChange() {
   }
 }
 
-function onMapChange() {
+async function onMapChange() {
   const mapItem = mapStore.maps.find(m => m.name === selectedMapName.value)
   if (mapItem) {
     mapStore.setMap(mapItem)
     mapRef.value?.resetView()
-    loadMarkers()
+    await loadMarkers()
   }
 }
 
@@ -449,6 +449,25 @@ async function onFormSubmit(data) {
       await mapStore.addMarker(data)
     }
     closeForm()
+    fetchRecentMarkers()
+  } catch (e) {
+    const msg = e.response?.data?.detail
+    if (e.response?.status === 403) {
+      alert('需要管理员权限')
+    } else if (msg) {
+      alert(msg)
+    } else {
+      alert('操作失败，请稍后重试')
+    }
+  }
+}
+
+async function onDeleteMarker(id) {
+  /** 删除标记点，刷新最新列表 */
+  if (!confirm('确认删除该标记？')) return
+  try {
+    await mapStore.removeMarker(id)
+    selectedMarker.value = null
     fetchRecentMarkers()
   } catch (e) {
     const msg = e.response?.data?.detail

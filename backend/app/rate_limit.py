@@ -15,14 +15,24 @@ class RateLimiter:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self._store: dict[str, list[float]] = defaultdict(list)
+        self._hits = 0
 
     def _clean(self, key: str, now: float) -> None:
         cutoff = now - self.window_seconds
         self._store[key] = [t for t in self._store[key] if t > cutoff]
 
+    def _full_clean(self, now: float) -> None:
+        cutoff = now - self.window_seconds
+        expired = [k for k, v in self._store.items() if not any(t > cutoff for t in v)]
+        for k in expired:
+            del self._store[k]
+
     def is_allowed(self, key: str) -> bool:
         now = time.time()
         self._clean(key, now)
+        self._hits += 1
+        if self._hits % 1000 == 0:
+            self._full_clean(now)
         if len(self._store[key]) >= self.max_requests:
             return False
         self._store[key].append(now)

@@ -14,7 +14,7 @@ class UserRegister(BaseModel):
     """用户注册请求"""
     username: str
     password: str
-    confirm_password: str = ""
+    confirm_password: Optional[str] = None
 
     @field_validator("username")
     @classmethod
@@ -35,8 +35,8 @@ class UserRegister(BaseModel):
 
     @field_validator("confirm_password")
     @classmethod
-    def passwords_match(cls, v: str, info) -> str:
-        if "password" in info.data and v != info.data["password"]:
+    def passwords_match(cls, v: Optional[str], info) -> Optional[str]:
+        if v is not None and "password" in info.data and v != info.data["password"]:
             raise ValueError("两次输入的密码不一致")
         return v
 

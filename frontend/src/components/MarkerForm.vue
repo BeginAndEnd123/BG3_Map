@@ -82,7 +82,7 @@
  * - 配置传送目标（选择目标区域和地图，输入坐标）
  * - 编辑模式下预填充已有数据
  */
-import { ref, reactive, onMounted, watch, computed } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import api from '../api/index'
 import { getMaps } from '../api/maps'
 

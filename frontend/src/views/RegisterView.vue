@@ -38,7 +38,7 @@ async function handleRegister() {
   }
   try {
     error.value = ''
-    await authStore.register(username.value, password.value)
+    await authStore.register(username.value, password.value, confirmPassword.value)
     router.push('/')
   } catch (e) {
     error.value = e.response?.data?.detail || '注册失败'
