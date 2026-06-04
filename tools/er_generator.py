@@ -82,22 +82,19 @@ def render_mermaid(schema: dict) -> str:
     rels = set()
 
     for table_name, cols in schema["tables"].items():
-        lines.append(f"    {table_name} {{")
+        lines.append(f"  {table_name} {{")
         for col in cols:
+            col_type = col["type"].split("(")[0]
             pk = "PK" if col["key"] == "PRI" else ""
-            fk = "FK" if col["key"] == "MUL" else ""
-            tag = " ".join(filter(None, [pk, fk]))
-            tag_str = f" [{tag}]" if tag else ""
-            comment = f" -- {col['comment']}" if col["comment"] else ""
-            lines.append(f"        {col['type']} {col['name']}{tag_str}{comment}")
-        lines.append("    }")
-        lines.append("")
+            entry = f"    {col_type} {col['name']} {pk}".rstrip()
+            lines.append(entry)
+        lines.append("  }")
 
     for fk in schema["foreign_keys"]:
         rel = (fk["table"], fk["ref_table"])
         if rel not in rels:
             rels.add(rel)
-            lines.append(f"    {fk['table']} }}o--|| {fk['ref_table']} : \"\"")
+            lines.append(f"  {fk['ref_table']} ||--o{{ {fk['table']} : has")
 
     lines.append("```")
     return "\n".join(lines)
