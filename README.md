@@ -253,7 +253,6 @@ BG3_map/
 │   └── mysql_mcp_server.py         # MySQL MCP 服务器
 ├── sql/
 │   └── init.sql                    # 数据库初始化脚本
-└── 项目相关报告以及截图/
 ```
 
 ## 切图工具
