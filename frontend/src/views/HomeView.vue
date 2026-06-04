@@ -275,7 +275,6 @@ async function onSearchSelect(marker) {
     keyword.value = ''
     await loadMarkers()
   }
-  keyword.value = marker.name
   await nextTick()
   mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord))
   mapRef.value?.highlightMarker(Number(marker.x_coord), Number(marker.y_coord))
