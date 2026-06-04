@@ -30,10 +30,25 @@ def _to_response(marker: Marker) -> dict:
     return data
 
 
+def _escape_like(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _parse_category_ids(raw: Optional[str]) -> list[int]:
+    if not raw:
+        return []
+    ids = []
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit():
+            ids.append(int(part))
+    return ids
+
+
 @router.get("", response_model=list[MarkerResponse])
 def list_markers(
     region_id: Optional[int] = Query(None),
-    category_id: Optional[int] = Query(None),
+    category_id: Optional[str] = Query(None),
     keyword: Optional[str] = Query(None),
     map_name: Optional[str] = Query(None),
     sort_by: Optional[str] = Query(None),
@@ -41,17 +56,19 @@ def list_markers(
     offset: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
-    """查询标记点列表，支持按区域/分类/关键词/地图名筛选，以及分页和排序"""
+    """查询标记点列表，支持按区域/分类(多选逗号分隔)/关键词/地图名筛选，以及分页和排序"""
     query = db.query(Marker).options(
-        joinedload(Marker.region),      # 预加载关联的区域
-        joinedload(Marker.category),     # 预加载关联的分类
+        joinedload(Marker.region),
+        joinedload(Marker.category),
     )
     if region_id is not None:
         query = query.filter(Marker.region_id == region_id)
     if category_id is not None:
-        query = query.filter(Marker.category_id == category_id)
+        ids = _parse_category_ids(category_id)
+        if ids:
+            query = query.filter(Marker.category_id.in_(ids))
     if keyword:
-        query = query.filter(Marker.name.like(f"%{keyword}%"))
+        query = query.filter(Marker.name.like(f"%{_escape_like(keyword)}%", escape="\\"))
     if map_name:
         query = query.filter(Marker.map_name == map_name)
     if sort_by == "created_at":
@@ -67,7 +84,7 @@ def list_markers(
 @router.get("/count")
 def count_markers(
     region_id: Optional[int] = Query(None),
-    category_id: Optional[int] = Query(None),
+    category_id: Optional[str] = Query(None),
     keyword: Optional[str] = Query(None),
     map_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
@@ -77,9 +94,11 @@ def count_markers(
     if region_id is not None:
         query = query.filter(Marker.region_id == region_id)
     if category_id is not None:
-        query = query.filter(Marker.category_id == category_id)
+        ids = _parse_category_ids(category_id)
+        if ids:
+            query = query.filter(Marker.category_id.in_(ids))
     if keyword:
-        query = query.filter(Marker.name.like(f"%{keyword}%"))
+        query = query.filter(Marker.name.like(f"%{_escape_like(keyword)}%", escape="\\"))
     if map_name:
         query = query.filter(Marker.map_name == map_name)
     return {"total": query.count()}

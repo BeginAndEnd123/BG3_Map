@@ -54,7 +54,7 @@
 
       <div class="stats">
         <h3>统计</h3>
-        <p>标记总数：{{ mapStore.markers.length }}</p>
+        <p>标记总数：{{ recentTotal }}</p>
       </div>
 
       <div class="recent-markers">
@@ -109,7 +109,7 @@
       </div>
 
       <div class="pick-overlay" v-if="pickMode">
-        <div class="pick-hint">拖动标记到目标位置</div>
+        <div class="pick-hint">点击地图放置标记，拖动微调位置</div>
         <button class="confirm-btn" @click="onConfirmPosition">确认位置</button>
       </div>
     </div>
@@ -257,13 +257,13 @@ function onSearchBlur() {
 async function onSearchSelect(marker) {
   /** 选中搜索结果：切换区域/地图，飞向标记位置并高亮 */
   showSearchResults.value = false
-  keyword.value = marker.name
   selectedMarker.value = marker
   const region = mapStore.regions.find(r => r.id === marker.region_id)
   const needSwitch = region && (marker.region_id !== currentRegionId.value || marker.map_name !== selectedMapName.value)
   if (region && needSwitch) {
     currentRegionId.value = marker.region_id
     mapStore.setRegion(region)
+    selectedCategoryIds.value = []
     await fetchMaps()
     if (marker.map_name) {
       const mapItem = mapStore.maps.find(m => m.name === marker.map_name)
@@ -272,8 +272,10 @@ async function onSearchSelect(marker) {
         mapStore.setMap(mapItem)
       }
     }
+    keyword.value = ''
     await loadMarkers()
   }
+  keyword.value = marker.name
   await nextTick()
   mapRef.value?.flyTo(Number(marker.x_coord), Number(marker.y_coord))
   mapRef.value?.highlightMarker(Number(marker.x_coord), Number(marker.y_coord))
@@ -315,7 +317,6 @@ async function fetchRecentMarkers() {
 
 function onRecentClick(marker) {
   /** 点击最新标记列表项 — 等同于搜索选中 */
-  keyword.value = marker.name
   onSearchSelect(marker)
 }
 
@@ -359,14 +360,13 @@ async function onRegionChange() {
   if (region) {
     mapStore.setRegion(region)
     await fetchMaps()
-    loadMarkers()
+    await loadMarkers()
     await nextTick()
     mapRef.value?.resetView()
   }
 }
 
 function onMapChange() {
-  /** 切换子地图 — 重置视图并重新加载标记 */
   const mapItem = mapStore.maps.find(m => m.name === selectedMapName.value)
   if (mapItem) {
     mapStore.setMap(mapItem)
@@ -387,6 +387,8 @@ async function onMarkerTeleport(marker) {
   if (!region) return
   currentRegionId.value = marker.target_region_id
   mapStore.setRegion(region)
+  selectedCategoryIds.value = []
+  keyword.value = ''
   await fetchMaps()
   if (marker.target_map_name) {
     const mapItem = mapStore.maps.find(m => m.name === marker.target_map_name)
@@ -404,7 +406,7 @@ async function onMarkerTeleport(marker) {
 function onStartAdd() {
   /** 管理员进入坐标拾取模式，准备新增标记 */
   pickMode.value = true
-  tempMarker.value = { x: 0, y: 0 }
+  tempMarker.value = null
   pickerCoords.value = null
   showAddForm.value = false
 }
@@ -448,20 +450,15 @@ async function onFormSubmit(data) {
     }
     closeForm()
     fetchRecentMarkers()
-  } catch {
-    alert('操作失败，请检查权限')
-  }
-}
-
-async function onDeleteMarker(id) {
-  /** 删除标记点，刷新最新列表 */
-  if (!confirm('确认删除该标记？')) return
-  try {
-    await mapStore.removeMarker(id)
-    selectedMarker.value = null
-    fetchRecentMarkers()
-  } catch {
-    alert('删除失败，请检查权限')
+  } catch (e) {
+    const msg = e.response?.data?.detail
+    if (e.response?.status === 403) {
+      alert('需要管理员权限')
+    } else if (msg) {
+      alert(msg)
+    } else {
+      alert('删除失败，请稍后重试')
+    }
   }
 }
 
@@ -474,9 +471,9 @@ onMounted(async () => {
   if (mapStore.regions.length > 0) {
     currentRegionId.value = mapStore.regions[0].id
     mapStore.setRegion(mapStore.regions[0])
-    fetchMaps()
+    await fetchMaps()
   }
-  loadMarkers()
+  await loadMarkers()
   fetchRecentMarkers()
 })
 </script>

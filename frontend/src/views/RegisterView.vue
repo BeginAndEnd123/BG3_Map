@@ -3,8 +3,9 @@
     <div class="auth-card">
       <h2>注册</h2>
       <form @submit.prevent="handleRegister">
-        <input type="text" v-model="username" placeholder="用户名" required />
-        <input type="password" v-model="password" placeholder="密码" required />
+        <input type="text" v-model="username" placeholder="用户名（至少2个字符）" required minlength="2" />
+        <input type="password" v-model="password" placeholder="密码（至少6个字符）" required minlength="6" />
+        <input type="password" v-model="confirmPassword" placeholder="确认密码" required />
         <button type="submit">注册</button>
       </form>
       <p class="auth-link">
@@ -27,9 +28,14 @@ const router = useRouter()
 const authStore = useAuthStore()
 const username = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const error = ref('')
 
 async function handleRegister() {
+  if (password.value !== confirmPassword.value) {
+    error.value = '两次输入的密码不一致'
+    return
+  }
   try {
     error.value = ''
     await authStore.register(username.value, password.value)

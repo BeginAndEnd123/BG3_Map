@@ -4,7 +4,7 @@ SQLAlchemy ORM 数据模型定义
 定义用户、区域、分类和标记点四张核心表及其关联关系。
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -70,3 +70,8 @@ class Marker(Base):
 
     region = relationship("Region", back_populates="markers")
     category = relationship("Category", back_populates="markers")
+
+    __table_args__ = (
+        Index("ix_markers_region_map_category", "region_id", "map_name", "category_id"),
+        Index("ix_markers_map_name", "map_name"),
+    )

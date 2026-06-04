@@ -7,15 +7,22 @@ Alembic 迁移环境配置
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+from dotenv import load_dotenv
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from app.database import Base
 from app import models
 
+load_dotenv()
+
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+db_url = os.getenv("DATABASE_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 # 目标元数据：包含所有 ORM 模型的表定义
 target_metadata = Base.metadata

@@ -48,6 +48,21 @@ const pickIcon = L.divIcon({
   className: '',
 })
 
+function _onMapClick(e) {
+  if (!props.pickMode) return
+  if (pickMarker) return
+  const pos = e.latlng
+  pickMarker = L.marker([pos.lat, pos.lng], {
+    icon: pickIcon,
+    draggable: true,
+  }).addTo(pickLayer)
+  pickMarker.on('dragend', () => {
+    const p = pickMarker.getLatLng()
+    emit('map-pick', { x: p.lat, y: p.lng })
+  })
+  emit('map-pick', { x: pos.lat, y: pos.lng })
+}
+
 function initMap() {
   /** 初始化 Leaflet 地图实例，使用 CRS.Simple 坐标系 */
   map = L.map(container.value, {
@@ -70,8 +85,8 @@ function updateTileLayer(url) {
   }).addTo(map)
 }
 
+/** 重置地图视图到原点 */
 function resetView() {
-  /** 重置地图视图到原点 */
   if (map) map.setView([0, 0], 2, { animate: false })
 }
 
@@ -109,24 +124,27 @@ function updateMarkers() {
 }
 
 function updatePickMode() {
-  /** 切换拾取模式下的鼠标样式 */
+  /** 切换拾取模式：绑定/解绑地图点击事件，切换光标样式 */
   if (!map) return
-  container.value.style.cursor = props.pickMode ? 'grab' : ''
+  if (props.pickMode) {
+    map.on('click', _onMapClick)
+    container.value.style.cursor = 'crosshair'
+  } else {
+    map.off('click', _onMapClick)
+    container.value.style.cursor = ''
+    if (pickMarker) {
+      pickLayer.clearLayers()
+      pickMarker = null
+    }
+  }
 }
 
 function updateTempMarker() {
-  /** 更新拾取模式中的临时标记位置，支持拖拽 */
+  /** 拾取模式：由地图点击事件管理标记创建和拖拽，此处仅处理清理 */
   if (!pickLayer) return
-  pickLayer.clearLayers()
-  if (props.tempMarker) {
-    const marker = L.marker([props.tempMarker.x, props.tempMarker.y], {
-      icon: pickIcon,
-      draggable: true,
-    }).addTo(pickLayer)
-    marker.on('dragend', () => {
-      const pos = marker.getLatLng()
-      emit('map-pick', { x: pos.lat, y: pos.lng })
-    })
+  if (!props.tempMarker && pickMarker) {
+    pickLayer.clearLayers()
+    pickMarker = null
   }
 }
 

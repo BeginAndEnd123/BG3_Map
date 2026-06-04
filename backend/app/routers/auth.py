@@ -8,12 +8,13 @@ from ..database import get_db
 from ..models import User
 from ..schemas import UserRegister, UserLogin, UserResponse, TokenResponse
 from ..auth import hash_password, verify_password, create_access_token, get_current_user
+from ..rate_limit import rate_limit_auth
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
 
 
 @router.post("/register", response_model=TokenResponse)
-def register(data: UserRegister, db: Session = Depends(get_db)):
+def register(data: UserRegister, db: Session = Depends(get_db), _=Depends(rate_limit_auth)):
     """注册新用户，成功后直接返回 JWT 令牌"""
     existing = db.query(User).filter(User.username == data.username).first()
     if existing:
@@ -33,7 +34,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, db: Session = Depends(get_db)):
+def login(data: UserLogin, db: Session = Depends(get_db), _=Depends(rate_limit_auth)):
     """用户登录，校验用户名密码并返回 JWT 令牌"""
     user = db.query(User).filter(User.username == data.username).first()
     if not user or not verify_password(data.password, user.password_hash):

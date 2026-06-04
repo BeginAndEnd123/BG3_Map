@@ -7,13 +7,38 @@ Pydantic 数据校验与序列化 Schema
 import json
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class UserRegister(BaseModel):
     """用户注册请求"""
     username: str
     password: str
+    confirm_password: str = ""
+
+    @field_validator("username")
+    @classmethod
+    def username_valid(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError("用户名至少需要2个字符")
+        if len(v) > 50:
+            raise ValueError("用户名不能超过50个字符")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def password_valid(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("密码至少需要6个字符")
+        return v
+
+    @field_validator("confirm_password")
+    @classmethod
+    def passwords_match(cls, v: str, info) -> str:
+        if "password" in info.data and v != info.data["password"]:
+            raise ValueError("两次输入的密码不一致")
+        return v
 
 
 class UserLogin(BaseModel):

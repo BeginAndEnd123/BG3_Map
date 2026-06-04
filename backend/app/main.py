@@ -9,13 +9,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .routers import auth, regions, categories, markers, maps, upload
+from .config import CORS_ORIGINS
 
 app = FastAPI(title="博德之门3 交互式地图", version="1.0.0")
 
-# 配置 CORS，允许前端开发服务器跨域访问
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
