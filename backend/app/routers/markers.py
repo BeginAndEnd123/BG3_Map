@@ -68,7 +68,12 @@ def list_markers(
         if ids:
             query = query.filter(Marker.category_id.in_(ids))
     if keyword:
-        query = query.filter(Marker.name.like(f"%{_escape_like(keyword)}%", escape="\\"))
+        escaped = _escape_like(keyword)
+        pattern = f"%{escaped}%"
+        query = query.filter(
+            Marker.name.like(pattern, escape="\\") |
+            Marker.description.like(pattern, escape="\\")
+        )
     if map_name:
         query = query.filter(Marker.map_name == map_name)
     if sort_by == "created_at":
@@ -98,7 +103,12 @@ def count_markers(
         if ids:
             query = query.filter(Marker.category_id.in_(ids))
     if keyword:
-        query = query.filter(Marker.name.like(f"%{_escape_like(keyword)}%", escape="\\"))
+        escaped = _escape_like(keyword)
+        pattern = f"%{escaped}%"
+        query = query.filter(
+            Marker.name.like(pattern, escape="\\") |
+            Marker.description.like(pattern, escape="\\")
+        )
     if map_name:
         query = query.filter(Marker.map_name == map_name)
     return {"total": query.count()}
