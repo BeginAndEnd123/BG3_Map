@@ -359,6 +359,8 @@ async function onRegionChange() {
   const region = mapStore.regions.find((r) => r.id === currentRegionId.value)
   if (region) {
     mapStore.setRegion(region)
+    selectedCategoryIds.value = []
+    keyword.value = ''
     await fetchMaps()
     await loadMarkers()
     await nextTick()
@@ -370,6 +372,8 @@ async function onMapChange() {
   const mapItem = mapStore.maps.find(m => m.name === selectedMapName.value)
   if (mapItem) {
     mapStore.setMap(mapItem)
+    selectedCategoryIds.value = []
+    keyword.value = ''
     mapRef.value?.resetView()
     await loadMarkers()
   }
