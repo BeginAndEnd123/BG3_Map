@@ -25,6 +25,7 @@ TileMap/
 
 # 项目文档（不纳入版本控制）
 项目相关报告以及截图/
+ISSUES.md
 
 # SSH keys (防止私钥泄露)
 id_rsa
