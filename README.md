@@ -168,42 +168,44 @@
 BG3_map/
 ├── .gitattributes
 ├── .gitignore
-├── DEVELOPMENT.md                 # 开发跟踪文档
-├── PRD.md                         # 产品需求文档
+├── ISSUES.md                       # 问题清单
+├── DEVELOPMENT.md                  # 开发跟踪文档
+├── PRD.md                          # 产品需求文档
 ├── README.md
-├── origin_3845393_146764.png
 ├── backend/
-│   ├── .env                       # 环境变量
+│   ├── .env                        # 环境变量
 │   ├── alembic.ini
 │   ├── requirements.txt
-│   ├── alembic/                   # 数据库迁移
+│   ├── alembic/                    # 数据库迁移
 │   │   ├── env.py
 │   │   ├── script.py.mako
 │   │   └── versions/
 │   │       └── 15a5faf78b3d_initial.py
-│   └── app/
-│       ├── __init__.py
-│       ├── main.py                 # FastAPI 应用入口
-│       ├── config.py               # 配置（数据库连接、JWT密钥等）
-│       ├── database.py             # 数据库连接与 Session 管理
-│       ├── models.py               # SQLAlchemy ORM 模型
-│       ├── schemas.py              # Pydantic 请求/响应模型
-│       ├── auth.py                 # JWT 认证与密码哈希
-│       ├── seed.py                 # 初始数据填充（admin账号、区域、分类）
-│       └── routers/
-│           ├── __init__.py
-│           ├── auth.py             # 认证路由
-│           ├── regions.py          # 区域路由
-│           ├── categories.py       # 分类路由
-│           ├── markers.py          # 标记路由
-│           ├── maps.py             # 地图列表路由
-│           └── upload.py           # 截图上传路由
-│   ├── static/                     # 用户上传文件
-│   │   └── screenshots/            # 标记截图
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py                 # FastAPI 应用入口
+│   │   ├── config.py               # 配置（数据库连接、JWT密钥等）
+│   │   ├── database.py             # 数据库连接与 Session 管理
+│   │   ├── models.py               # SQLAlchemy ORM 模型
+│   │   ├── schemas.py              # Pydantic 请求/响应模型
+│   │   ├── auth.py                 # JWT 认证与密码哈希
+│   │   ├── rate_limit.py           # 请求频率限制
+│   │   ├── seed.py                 # 初始数据填充（admin账号、区域、分类）
+│   │   └── routers/
+│   │       ├── __init__.py
+│   │       ├── auth.py             # 认证路由
+│   │       ├── regions.py          # 区域路由
+│   │       ├── categories.py       # 分类路由
+│   │       ├── markers.py          # 标记路由
+│   │       ├── maps.py             # 地图列表路由
+│   │       └── upload.py           # 截图上传路由
+│   └── static/                     # 用户上传文件
+│       └── screenshots/            # 标记截图
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.js
 │   ├── package.json
+│   ├── package-lock.json
 │   ├── public/
 │   │   ├── favicon.svg
 │   │   └── icons/
@@ -221,8 +223,6 @@ BG3_map/
 │       │   ├── categories.js       # 分类 API
 │       │   ├── markers.js          # 标记 API
 │       │   └── maps.js             # 地图列表 API
-│       ├── assets/
-│       │   └── icons/              # 资源图标（预留）
 │       ├── components/
 │       │   ├── MapContainer.vue     # 地图容器
 │       │   ├── MarkerPopup.vue      # 标记详情弹窗
@@ -249,9 +249,11 @@ BG3_map/
 │   └── chapterX/地图名/{z}/{y}/{x}.png
 ├── tools/
 │   ├── tile_cutter.py              # 瓦片切图工具
-│   └── fix_admin_pw.py             # 管理员密码修复脚本
+│   ├── fix_admin_pw.py             # 管理员密码修复脚本
+│   └── mysql_mcp_server.py         # MySQL MCP 服务器
 ├── sql/
 │   └── init.sql                    # 数据库初始化脚本
+└── 项目相关报告以及截图/
 ```
 
 ## 切图工具
