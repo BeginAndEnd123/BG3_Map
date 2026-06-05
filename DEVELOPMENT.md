@@ -197,3 +197,57 @@
 | 18 | 前端 | 认证页面样式重复 | #60 |
 | 19 | 前端 | hasError 死代码 | #61 |
 | 20 | 前端 | 登录按钮缺少 loading 状态 | #62 |
+
+---
+
+## 2026-06-05 架构审查 — 重构候选
+
+> 详细报告见 `C:\Users\1\AppData\Local\Temp\architecture-review-20260605.html`
+> 方法基于深度/局部性模型，术语见下文说明
+
+### 模块术语
+
+- **模块 (Module)**：任何有接口和实现的东西（函数、类、包、组件）
+- **接口 (Interface)**：调用者需要知道的一切（类型、不变量、错误模式、顺序）
+- **深度 (Depth)**：接口简单但背后逻辑复杂 → 高杠杆
+- **浅度 (Shallow)**：接口几乎和实现一样复杂 → 低杠杆
+- **Seam**：接口所在的位置，可以不修改原代码就改变行为的地方
+- **局部性 (Locality)**：改动、bug、知识集中在一处的程度
+- **删除测试 (Deletion Test)**：想象删除这个模块——复杂度消失(直通)还是重新出现在各处(有深度)
+
+### 重构候选
+
+#### P0 · Strong（高深度+高局部性，立即执行）
+
+| # | 层面 | 候选 | 涉及文件 | 工作量 |
+|---|------|------|----------|--------|
+| 1 | 后端 | 抽取 MarkerRepository 层，消除 list/count 筛选重复 | `routers/markers.py` | 30min |
+| 2 | 前端 | HomeView God Component 拆分为 5 个 composable | `views/HomeView.vue` | 2h |
+| 3 | 前端 | Token 双源真实 → auth store 为唯一真实源 | `auth.js, router, api/index.js` | 30min |
+
+**#1 细节**：`list_markers` 和 `count_markers` 中 20 行筛选代码完全复制。提取 `_apply_filters()` 公共函数，Router 只做 HTTP 关注点。首次实现了"修改 DB schema 不需要改 Router 代码"。
+
+**#2 细节**：HomeView (684行) 承载 13 个职责：区域切换、地图选择、分类筛选、搜索防抖、分页、统计、标记CRUD、坐标拾取、传送跳转等。拆分为 `useMapNavigation`、`useMarkerSearch`、`useRecentMarkers`、`usePickMode`、`useMarkerForm` 五个 composable。抽 `RecentMarkersPanel`、`CategoryFilter`、`MarkerSearch` 三个独立组件。
+
+**#3 细节**：JWT token 被 `stores/auth.js`、`router/index.js`、`api/index.js` 三个模块直接从 localStorage 读写。改成 auth store 是唯一真实源，其他模块通过 getter 访问。axios 401 拦截器改用 `authStore.logout()` + `router.push`，不再用 `window.location.href`。
+
+#### P1 · Worth Exploring（中深度/高局部性）
+
+| # | 层面 | 候选 | 涉及文件 |
+|---|------|------|----------|
+| 4 | 后端 | auth.py 拆分为 `core.py`(纯函数) + `dependencies.py`(FastAPI适配器) | `auth.py` |
+| 5 | 前端 | API 浅模块合并：删除 4 个单行导出文件，store 直接调 axios | `api/regions.js, categories.js, maps.js, auth.js` |
+| 6 | 后端 | 消除 CHAPTER_MAP(seed+map重复) 和 UPLOAD_DIR(marker+upload重复) | `seed.py, maps.py, markers.py, upload.py` |
+
+#### P2 · Speculative（低深度/高局部性或反之）
+
+| # | 层面 | 候选 | 涉及文件 |
+|---|------|------|----------|
+| 7 | 前端 | MapContainer 命令式耦合 → `focusCoords` prop 声明式驱动 | `MapContainer.vue, HomeView.vue` |
+| 8 | 前端 | Props 瀑布 → MarkerForm/Popup 直连 `useMapStore()` | `HomeView.vue, MarkerForm.vue, MarkerPopup.vue` |
+| 9 | 后端 | config.py + database.py 浅模块 → Pydantic BaseSettings | `config.py, database.py` |
+| 10 | 前端 | SidePanel (19行空壳) → 用 CSS 类替代 | `SidePanel.vue` |
+
+### 首选推荐
+
+**#1 Repository 层**——改动在一个文件内，消除重复、开启可测试性、为后续所有数据层改进铺路。30 分钟工作量。
