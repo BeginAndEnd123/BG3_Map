@@ -67,14 +67,12 @@
         </ul>
         <p v-else class="empty-text">暂无标记</p>
         <div v-if="recentTotal > 0" class="pagination">
-          <div class="page-btns">
-            <button :disabled="recentPage <= 1" @click="onRecentPage(recentPage - 1)">‹</button>
-            <template v-for="p in recentPages" :key="p">
-              <button v-if="p !== '…'" :class="{ active: p === recentPage }" @click="onRecentPage(p)">{{ p }}</button>
-              <span v-else class="page-dots">…</span>
-            </template>
-            <button :disabled="recentPage >= recentTotalPages" @click="onRecentPage(recentPage + 1)">›</button>
-          </div>
+          <button :disabled="recentPage <= 1" @click="onRecentPage(recentPage - 1)">‹</button>
+          <template v-for="p in recentPages" :key="p">
+            <button v-if="p !== '…'" :class="{ active: p === recentPage }" @click="onRecentPage(p)">{{ p }}</button>
+            <span v-else class="page-dots">…</span>
+          </template>
+          <button :disabled="recentPage >= recentTotalPages" @click="onRecentPage(recentPage + 1)">›</button>
           <span class="page-goto">
             <input type="number" v-model.number="gotoPage" min="1" :max="recentTotalPages" @keyup.enter="onGotoPage" />
             <button @click="onGotoPage">跳转</button>
@@ -623,8 +621,7 @@ onBeforeUnmount(() => {
 .recent-markers li:hover { background: #2a2a4e; border-radius: 3px; }
 .recent-name { color: #eee; }
 .recent-region { color: #888; font-size: 11px; }
-.pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
-.page-btns { display: flex; align-items: center; gap: 4px; min-width: 120px; }
+.pagination { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
 .pagination button {
   background: #2a2a4e; color: #eee; border: 1px solid #444;
   min-width: 26px; height: 26px; border-radius: 3px; cursor: pointer; font-size: 13px;
@@ -632,7 +629,7 @@ onBeforeUnmount(() => {
 .pagination button:disabled { opacity: 0.3; cursor: default; }
 .pagination button.active { background: #ffd700; color: #1a1a2e; border-color: #ffd700; font-weight: bold; }
 .page-dots { color: #888; font-size: 13px; min-width: 20px; text-align: center; }
-.page-goto { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.page-goto { display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-left: auto; }
 .page-goto input { width: 36px; height: 24px; padding: 0 4px; border: 1px solid #444; border-radius: 3px; background: #16213e; color: #eee; font-size: 12px; text-align: center; }
 .page-goto button { min-width: 24px; height: 24px; font-size: 12px; background: #ffd700; color: #1a1a2e; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
 .empty-text { font-size: 12px; color: #555; margin-top: 4px; height: 125px; }
