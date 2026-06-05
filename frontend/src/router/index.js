@@ -17,7 +17,7 @@ const routes = [
 ]
 
 // 无需登录即可访问的路由
-const WHITE_LIST = ['login', 'register']
+const WHITE_LIST = ['login', 'register', 'not-found']
 
 const router = createRouter({
   history: createWebHistory(),

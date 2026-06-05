@@ -17,10 +17,10 @@ def seed():
     """
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
-
-    if db.query(Region).count() > 0:
-        print("数据已存在，跳过填充")
-        return
+    try:
+        if db.query(Region).count() > 0:
+            print("数据已存在，跳过填充")
+            return
 
     # 五个游戏章节区域
     regions = [
@@ -48,8 +48,10 @@ def seed():
     )
     db.add(admin)
 
-    db.commit()
-    print("初始数据填充完成")
+        db.commit()
+        print("初始数据填充完成")
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

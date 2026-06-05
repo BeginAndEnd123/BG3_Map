@@ -21,16 +21,24 @@ export const useMapStore = defineStore('map', () => {
   const currentMap = ref(null)         // 当前选中子地图
 
   async function fetchRegions() {
-    const res = await getRegions()
-    regions.value = res.data
-    if (!currentRegion.value && regions.value.length > 0) {
-      currentRegion.value = regions.value[0]
+    try {
+      const res = await getRegions()
+      regions.value = res.data
+      if (!currentRegion.value && regions.value.length > 0) {
+        currentRegion.value = regions.value[0]
+      }
+    } catch (e) {
+      console.error('获取区域列表失败:', e)
     }
   }
 
   async function fetchCategories() {
-    const res = await getCategories()
-    categories.value = res.data
+    try {
+      const res = await getCategories()
+      categories.value = res.data
+    } catch (e) {
+      console.error('获取分类列表失败:', e)
+    }
   }
 
   async function fetchMarkers(params = {}) {

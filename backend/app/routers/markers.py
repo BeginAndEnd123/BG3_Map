@@ -166,15 +166,16 @@ def update_marker(
     if data.images is not None:
         old_urls = set(parse_images(marker.screenshot))
         new_urls = set(data.images)
-        # 删除被移除的旧截图文件
-        for url in old_urls - new_urls:
+        to_delete = old_urls - new_urls
+        marker.screenshot = json.dumps(data.images, ensure_ascii=False)
+    db.commit()
+    db.refresh(marker)
+    if data.images is not None:
+        for url in to_delete:
             filename = url.rsplit("/", 1)[-1]
             filepath = UPLOAD_DIR / filename
             if filepath.exists():
                 filepath.unlink()
-        marker.screenshot = json.dumps(data.images, ensure_ascii=False)
-    db.commit()
-    db.refresh(marker)
     return MarkerResponse.model_validate(_to_response(marker))
 
 

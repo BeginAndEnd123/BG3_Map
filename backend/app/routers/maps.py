@@ -29,6 +29,9 @@ def list_maps(chapter: str = ""):
     通过扫描瓦片目录自动计算每个子地图的最大 zoom 级别。
     """
     if chapter:
+        chapter = os.path.basename(chapter)
+        if chapter not in CHAPTER_MAP:
+            raise HTTPException(status_code=400, detail="无效的章节参数")
         dir_path = TILE_DIR / chapter
         if not dir_path.is_dir():
             raise HTTPException(404, "章节不存在")

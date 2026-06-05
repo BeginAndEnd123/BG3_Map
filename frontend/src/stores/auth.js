@@ -26,13 +26,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUser() {
-    /** 尝试用本地 token 恢复登录态，失败则登出 */
+    /** 尝试用本地 token 恢复登录态，仅 401 时登出 */
     if (!token.value) return
     try {
       const res = await getMe()
       user.value = res.data
-    } catch {
-      logout()
+    } catch (e) {
+      if (e.response?.status === 401) {
+        logout()
+      }
     }
   }
 

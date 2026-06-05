@@ -9,7 +9,13 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from .config import DATABASE_URL
 
 # SQLAlchemy 引擎实例
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    pool_size=10,
+    max_overflow=20,
+)
 # 会话工厂，关闭自动提交和自动刷新，由业务逻辑显式控制事务
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # ORM 模型基类

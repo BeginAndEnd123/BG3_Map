@@ -16,6 +16,6 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")
 # JWT 加密算法
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 # JWT 过期时间，默认 24 小时 (分钟)
-JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
+JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES") or "1440")
 # CORS 允许的来源，逗号分隔
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")

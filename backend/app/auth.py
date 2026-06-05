@@ -53,9 +53,10 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        user_id: int = payload.get("user_id")
-        if user_id is None:
+        user_id_raw = payload.get("user_id")
+        if user_id_raw is None:
             raise credentials_exception
+        user_id = int(user_id_raw)
     except JWTError:
         raise credentials_exception
 

@@ -20,6 +20,8 @@ class RateLimiter:
     def _clean(self, key: str, now: float) -> None:
         cutoff = now - self.window_seconds
         self._store[key] = [t for t in self._store[key] if t > cutoff]
+        if not self._store[key]:
+            del self._store[key]
 
     def _full_clean(self, now: float) -> None:
         cutoff = now - self.window_seconds
@@ -43,7 +45,11 @@ _auth_limiter = RateLimiter(max_requests=10, window_seconds=60)
 
 
 def rate_limit_auth(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
     key = f"auth:{client_ip}"
     if not _auth_limiter.is_allowed(key):
         raise HTTPException(

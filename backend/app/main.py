@@ -5,13 +5,22 @@
 """
 
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from .routers import auth, regions, categories, markers, maps, upload
 from .config import CORS_ORIGINS
 
 app = FastAPI(title="博德之门3 交互式地图", version="1.0.0")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "服务器内部错误"},
+    )
 
 app.add_middleware(
     CORSMiddleware,

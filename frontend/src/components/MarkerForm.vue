@@ -148,12 +148,22 @@ watch(() => props.initialCoords, (coords) => {
   }
 }, { deep: true })
 
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+
 async function onFileSelect(e) {
-  /** 逐个上传选择的截图文件，追加到 images 列表 */
   const files = e.target.files
   if (!files || files.length === 0) return
   uploadError.value = ''
   for (let i = 0; i < files.length; i++) {
+    if (!ALLOWED_FILE_TYPES.includes(files[i].type)) {
+      uploadError.value = `${files[i].name} 格式不支持，仅限 JPG/PNG/GIF/WebP`
+      continue
+    }
+    if (files[i].size > MAX_FILE_SIZE) {
+      uploadError.value = `${files[i].name} 超过 5MB 限制`
+      continue
+    }
     uploading.value = true
     uploadProgress.value = `${i + 1}/${files.length}`
     const fd = new FormData()
@@ -199,16 +209,10 @@ function removeImage(index) {
 
 async function onSubmit() {
   /** 提交表单，触发父组件处理创建或更新逻辑 */
-  submitting.value = true
+  // submitting 状态由父组件通过回调或 prop 控制
   error.value = ''
-  try {
-    const payload = { ...form, region_id: props.regionId }
-    emit('submit', payload)
-  } catch {
-    error.value = '提交失败，请重试'
-  } finally {
-    submitting.value = false
-  }
+  const payload = { ...form, region_id: props.regionId }
+  emit('submit', payload)
 }
 </script>
 

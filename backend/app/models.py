@@ -6,7 +6,7 @@ SQLAlchemy ORM 数据模型定义
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL, Index
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from .database import Base
 
 
@@ -19,7 +19,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     avatar = Column(String(255))
     is_admin = Column(Integer, default=0)         # 0=普通用户, 1=管理员
-    created_at = Column(DateTime, default=datetime.now)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class Region(Base):
@@ -31,7 +31,7 @@ class Region(Base):
     description = Column(Text)
     tile_url = Column(String(255))                # Leaflet 瓦片加载 URL 模板
     sort_order = Column(Integer, default=0)       # 排序序号 (序章=0, 第一章=1 ...)
-    created_at = Column(DateTime, default=datetime.now)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     markers = relationship("Marker", back_populates="region")
 
@@ -66,7 +66,7 @@ class Marker(Base):
     target_map_name = Column(String(100), default='')      # 传送目标子地图名称
     target_x = Column(DECIMAL(10, 2), nullable=True)       # 传送目标 X 坐标
     target_y = Column(DECIMAL(10, 2), nullable=True)       # 传送目标 Y 坐标
-    created_at = Column(DateTime, default=datetime.now)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     region = relationship("Region", back_populates="markers")
     category = relationship("Category", back_populates="markers")

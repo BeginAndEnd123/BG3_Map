@@ -47,7 +47,9 @@ async def upload_file(file: UploadFile = File(...)):
     if not _validate_magic(content, file.content_type):
         raise HTTPException(status_code=400, detail="文件内容与声称的类型不符")
 
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "png"
+    ext = "png"
+    if file.filename and "." in file.filename:
+        ext = file.filename.rsplit(".", 1)[-1].lower()
     filename = f"{uuid.uuid4().hex}.{ext}"
     filepath = UPLOAD_DIR / filename
 

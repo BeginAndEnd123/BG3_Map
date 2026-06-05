@@ -11,14 +11,21 @@
  *
  * 挂载时自动发起 fetchUser 请求恢复登录状态。
  */
-import { onMounted } from 'vue'
+import { onMounted, onErrorCaptured, ref } from 'vue'
 import { useAuthStore } from './stores/auth'
 import NavBar from './components/NavBar.vue'
 
 const authStore = useAuthStore()
+const hasError = ref(false)
+
+onErrorCaptured((err) => {
+  console.error('全局错误捕获:', err)
+  hasError.value = true
+  return false
+})
 
 onMounted(() => {
-  authStore.fetchUser()  // 刷新用户 token，恢复登录态
+  authStore.fetchUser()
 })
 </script>
 

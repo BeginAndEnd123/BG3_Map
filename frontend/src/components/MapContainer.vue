@@ -12,7 +12,7 @@
  * - 传送标记点高亮动画
  * - 通过 defineExpose 暴露 flyTo/highlightMarker/resetView 方法
  */
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import L from 'leaflet'
 
 const props = defineProps({
@@ -34,6 +34,7 @@ let markerLayer = null            // 标记点图层组
 let pickLayer = null              // 拾取模式图层组
 let highlightLayer = null         // 高亮动画图层组
 let pickMarker = null
+let highlightTimer = null
 
 // 拾取模式下的标记图标
 const pickIcon = L.divIcon({
@@ -155,10 +156,15 @@ onMounted(() => {
   updatePickMode()
 })
 
+onBeforeUnmount(() => {
+  if (highlightTimer) clearTimeout(highlightTimer)
+  if (map) { map.remove(); map = null }
+})
+
 /** 平滑飞行到指定坐标 */
 function flyTo(lat, lng, zoom) {
   if (!map) return
-  const targetZoom = zoom != null ? zoom : Math.max(1, map.getMaxZoom() - 1)
+  const targetZoom = zoom != null ? zoom : Math.max(1, props.maxZoom - 1)
   map.flyTo([lat, lng], targetZoom, { duration: 0.5 })
 }
 
@@ -173,7 +179,8 @@ function highlightMarker(lat, lng) {
     className: '',
   })
   L.marker([lat, lng], { icon: pulseIcon, interactive: false }).addTo(highlightLayer)
-  setTimeout(() => highlightLayer.clearLayers(), 3000)
+  if (highlightTimer) clearTimeout(highlightTimer)
+  highlightTimer = setTimeout(() => highlightLayer.clearLayers(), 3000)
 }
 
 // 暴露给父组件调用的方法
