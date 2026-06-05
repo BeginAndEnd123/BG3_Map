@@ -527,7 +527,7 @@ onBeforeUnmount(() => {
   padding-bottom: 10px; border-bottom: 1px solid var(--border-gold);
 }
 :deep(h3) {
-  font-size: 11px; margin: 10px 0 4px; color: var(--text-muted);
+  font-size: 11px; margin: 10px 0 4px; color: var(--text-secondary);
   font-family: var(--font-display); font-weight: 600; letter-spacing: 0.08em;
   text-transform: uppercase;
 }
