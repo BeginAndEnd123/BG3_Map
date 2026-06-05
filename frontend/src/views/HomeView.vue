@@ -73,10 +73,10 @@
               <button v-if="p !== '…'" :class="{ active: p === recentPage }" @click="onRecentPage(p)">{{ p }}</button>
               <span v-else class="page-dots">…</span>
             </template>
-            <button :disabled="recentPage >= recentPages.length" @click="onRecentPage(recentPage + 1)">›</button>
+            <button :disabled="recentPage >= recentTotalPages" @click="onRecentPage(recentPage + 1)">›</button>
           </div>
           <span class="page-goto">
-            <input type="number" v-model.number="gotoPage" min="1" :max="Math.max(recentPages.length, 1)" @keyup.enter="onGotoPage" />
+            <input type="number" v-model.number="gotoPage" min="1" :max="recentTotalPages" @keyup.enter="onGotoPage" />
             <button @click="onGotoPage">跳转</button>
           </span>
         </div>
@@ -200,6 +200,8 @@ const recentPages = computed(() => {
   }
   return pages
 })
+
+const recentTotalPages = computed(() => Math.ceil(recentTotal.value / recentPageSize))
 const pickMode = ref(false)                            // 是否处于坐标拾取模式
 const showSearchResults = ref(false)                    // 是否显示搜索下拉
 const searchResults = ref([])                          // 搜索结果
