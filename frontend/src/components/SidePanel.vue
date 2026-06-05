@@ -11,7 +11,7 @@
 .side-panel {
   width: 280px; min-width: 280px;
   background: var(--bg-surface);
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 20px rgba(0,0,0,0.2);
