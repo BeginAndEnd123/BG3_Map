@@ -218,76 +218,60 @@ async function onSubmit() {
 
 <style scoped>
 .form-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; background: rgba(8,8,18,0.5);
+  z-index: 1100; display: flex; align-items: center; justify-content: center;
 }
 .form-card {
-  background: #1a1a2e;
-  color: #eee;
-  border-radius: 8px;
-  padding: 28px;
-  width: 420px;
-  max-width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+  background: var(--bg-surface); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 28px; width: 420px; max-width: 90%; max-height: 90vh;
+  overflow-y: auto; box-shadow: var(--shadow-gold);
 }
-.form-card h3 { font-size: 18px; margin-bottom: 20px; color: #ffd700; }
-label {
-  display: block;
-  font-size: 13px;
-  color: #aaa;
-  margin-bottom: 14px;
+.form-card h3 {
+  font-family: var(--font-display); font-size: 17px;
+  margin-bottom: 20px; color: var(--gold); letter-spacing: 0.06em;
 }
+label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
 label input, label select, label textarea {
-  width: 100%;
-  margin-top: 4px;
-  padding: 8px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #16213e;
-  color: #eee;
-  font-size: 14px;
+  width: 100%; margin-top: 4px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-input); color: var(--text-primary);
+  font-size: 14px; font-family: var(--font-body);
+  outline: none; transition: border var(--transition);
 }
+label input:focus, label select:focus, label textarea:focus { border-color: var(--gold-dim); }
 label textarea { resize: vertical; }
 .coord-info {
-  font-size: 12px;
-  color: #888;
-  margin-bottom: 14px;
-  padding: 6px 10px;
-  background: #16213e;
-  border-radius: 4px;
+  font-size: 12px; color: var(--text-muted); margin-bottom: 14px;
+  padding: 6px 10px; background: var(--bg-input);
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
 }
-.upload-status { color: #888; font-size: 12px; margin-top: 4px; }
+.upload-status { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
 .image-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .image-item { position: relative; width: 80px; height: 80px; }
-.upload-preview { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.upload-preview { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); }
 .img-remove {
   position: absolute; top: -6px; right: -6px;
   width: 20px; height: 20px; border-radius: 50%;
-  background: #ff4444; color: #fff; border: none;
+  background: var(--danger); color: #fff; border: none;
   font-size: 14px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
-.target-section { border-top: 1px solid #333; padding-top: 14px; margin-top: 14px; }
-.target-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #ffd700; }
+.target-section { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
+.target-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--gold); }
 .target-toggle input { width: auto; margin: 0; }
 .coord-row { display: flex; gap: 10px; }
 .coord-row label { flex: 1; }
-.form-error { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
+.form-error { color: var(--danger); font-size: 13px; margin: 8px 0; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .btn-cancel, .btn-submit {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
+  padding: 8px 20px; border: none; border-radius: var(--radius-sm);
+  font-size: 14px; cursor: pointer; font-family: var(--font-body);
+  transition: all var(--transition);
 }
-.btn-cancel { background: #444; color: #ccc; }
-.btn-submit { background: #ffd700; color: #1a1a2e; font-weight: bold; }
-.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-cancel:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+.btn-submit { background: var(--gold); color: var(--bg-deep); font-weight: 600; }
+.btn-submit:hover { background: var(--gold-light); }
+.btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>

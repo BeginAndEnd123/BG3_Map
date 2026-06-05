@@ -5,19 +5,15 @@
 </template>
 
 <script setup>
-/**
- * 侧边面板容器 — 为左侧栏提供统一的样式和滚动支持
- * 通过默认插槽接收子内容。
- */
 </script>
 
 <style scoped>
 .side-panel {
-  width: 280px;
-  min-width: 280px;
-  background: #1a1a2e;
-  color: #eee;
+  width: 280px; min-width: 280px;
+  background: var(--bg-surface);
   padding: 20px;
   overflow-y: auto;
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 20px rgba(0,0,0,0.2);
 }
 </style>

@@ -45,62 +45,46 @@ const images = computed(() => props.marker?.images || [])
 
 <style scoped>
 .marker-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; background: rgba(8,8,18,0.5);
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
 }
 .marker-card {
-  background: #1a1a2e;
-  color: #eee;
-  border-radius: 8px;
-  padding: 24px;
-  max-width: 360px;
-  width: 90%;
-  position: relative;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: var(--bg-surface); color: var(--text-primary);
+  border: 1px solid var(--border-gold); border-radius: var(--radius-sm);
+  padding: 24px; max-width: 360px; width: 90%; position: relative;
+  box-shadow: var(--shadow-gold);
 }
 .close-btn {
-  position: absolute;
-  top: 8px; right: 12px;
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 24px;
-  cursor: pointer;
+  position: absolute; top: 8px; right: 12px;
+  background: none; border: none; color: var(--text-muted);
+  font-size: 22px; cursor: pointer; line-height: 1;
 }
-.close-btn:hover { color: #fff; }
-.marker-card h3 { font-size: 18px; margin-bottom: 8px; color: #ffd700; }
+.close-btn:hover { color: var(--gold); }
+.marker-card h3 { font-family: var(--font-display); font-size: 17px; margin-bottom: 8px; color: var(--gold); letter-spacing: 0.04em; }
 .category-tag {
-  display: inline-block;
-  font-size: 12px;
-  padding: 2px 10px;
-  border-radius: 10px;
-  color: #fff;
-  margin-bottom: 8px;
+  display: inline-block; font-size: 11px; padding: 2px 10px;
+  border-radius: 2px; color: #fff; margin-bottom: 10px;
+  font-weight: 600; letter-spacing: 0.05em;
 }
-.desc { font-size: 14px; color: #ccc; margin: 8px 0; line-height: 1.5; }
-.coords { font-size: 12px; color: #888; }
-.image-gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.screenshot { width: calc(50% - 3px); height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+.desc { font-size: 14px; color: var(--text-secondary); margin: 8px 0; line-height: 1.6; }
+.coords { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.image-gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.screenshot { width: calc(50% - 3px); height: 80px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border); }
 .screenshot:hover { opacity: 0.85; }
 .enlarged-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  position: fixed; inset: 0; background: rgba(8,8,18,0.9);
   display: flex; align-items: center; justify-content: center;
   z-index: 2000; cursor: pointer;
 }
-.enlarged-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+.enlarged-img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius-sm); }
 .action-bar { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
 .action-bar :deep(.action-btn) {
-  padding: 6px 16px;
-  border: none;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: pointer;
+  padding: 6px 16px; border: none; border-radius: var(--radius-sm);
+  font-size: 13px; cursor: pointer; font-family: var(--font-body);
+  transition: opacity var(--transition);
 }
-.action-bar :deep(.action-btn.edit) { background: #ffd700; color: #1a1a2e; }
-.action-bar :deep(.action-btn.delete) { background: #ff4444; color: #fff; }
+.action-bar :deep(.action-btn.edit) { background: var(--gold); color: var(--bg-deep); }
+.action-bar :deep(.action-btn.edit):hover { opacity: 0.85; }
+.action-bar :deep(.action-btn.delete) { background: var(--danger); color: #fff; }
+.action-bar :deep(.action-btn.delete):hover { background: var(--danger-hover); }
 </style>

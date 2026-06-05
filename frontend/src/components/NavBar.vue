@@ -12,9 +12,6 @@
 </template>
 
 <script setup>
-/**
- * 顶部导航栏 — 显示品牌名称和用户信息，提供登出按钮
- */
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -29,35 +26,30 @@ function onLogout() {
 
 <style scoped>
 .navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  padding: 0 20px;
-  background: #0f0f23;
-  color: #eee;
-  border-bottom: 1px solid #2a2a4a;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 46px; padding: 0 22px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.3);
 }
-.brand { font-size: 15px; font-weight: bold; color: #ffd700; }
+.brand {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 600; letter-spacing: 0.06em;
+  color: var(--gold);
+}
 .nav-right { display: flex; align-items: center; gap: 16px; }
-.user-info { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.user-name { color: #eee; }
+.user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.user-name { color: var(--text-primary); }
 .admin-badge {
-  font-size: 11px;
-  background: #ffd700;
-  color: #1a1a2e;
-  padding: 2px 8px;
-  border-radius: 8px;
-  font-weight: bold;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+  background: var(--gold); color: var(--bg-deep);
+  padding: 1px 7px; border-radius: 2px;
 }
 .logout-btn {
-  padding: 4px 14px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background: transparent;
-  color: #ccc;
-  font-size: 13px;
-  cursor: pointer;
+  padding: 4px 14px; font-size: 13px;
+  border: 1px solid rgba(200,164,78,0.25); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+  transition: all var(--transition);
 }
-.logout-btn:hover { background: #333; color: #fff; }
+.logout-btn:hover { border-color: var(--gold); color: var(--gold); }
 </style>

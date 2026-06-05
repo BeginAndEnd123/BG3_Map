@@ -194,15 +194,15 @@ watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 </script>
 
 <style scoped>
-#map-container { width: 100%; height: 100%; background: #000; }
-#map-container :deep(.leaflet-container) { background: #000; }
+#map-container { width: 100%; height: 100%; background: #080812; }
+#map-container :deep(.leaflet-container) { background: #080812; }
 </style>
 
 <style>
 .pulse-marker {
   width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(255, 215, 0, 0.3);
-  border: 3px solid #ffd700;
+  background: rgba(200, 164, 78, 0.25);
+  border: 3px solid #c8a44e;
   animation: pulse-ring 1.5s ease-out infinite;
 }
 @keyframes pulse-ring {

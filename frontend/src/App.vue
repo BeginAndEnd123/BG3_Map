@@ -30,9 +30,7 @@ onMounted(() => {
 </script>
 
 <style>
-/* 全局重置：填充视口、flex 列布局、统一字体 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #app, #map-app { width: 100%; height: 100%; }
-body { font-family: "Microsoft YaHei", sans-serif; }
 #map-app { display: flex; flex-direction: column; }
 </style>

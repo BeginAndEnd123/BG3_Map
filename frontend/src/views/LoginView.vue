@@ -16,9 +16,6 @@
 </template>
 
 <script setup>
-/**
- * 登录页 — 用户名密码登录，成功后跳转首页
- */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -43,23 +40,42 @@ async function handleLogin() {
 <style scoped>
 .auth-page {
   display: flex; justify-content: center; align-items: center;
-  height: 100vh; background: #0f0f23;
+  flex: 1; background: var(--bg-deep);
+  position: relative;
 }
 .auth-card {
-  background: #1a1a2e; padding: 40px; border-radius: 8px;
-  width: 360px; color: #eee;
+  background: var(--bg-surface);
+  padding: 44px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  width: 360px;
+  box-shadow: var(--shadow-gold);
 }
-.auth-card h2 { text-align: center; margin-bottom: 24px; color: #ffd700; }
+.auth-card h2 {
+  font-family: var(--font-display); font-size: 22px;
+  text-align: center; margin-bottom: 28px; color: var(--gold);
+  letter-spacing: 0.1em;
+}
 input {
-  width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #444;
-  border-radius: 4px; background: #16213e; color: #eee; font-size: 14px;
+  width: 100%; padding: 9px 12px; margin: 8px 0;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-input); color: var(--text-primary);
+  font-size: 14px; font-family: var(--font-body);
+  outline: none; transition: border var(--transition);
 }
-button {
-  width: 100%; padding: 10px; margin-top: 16px; background: #e94560;
-  color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;
+input::placeholder { color: var(--text-muted); }
+input:focus { border-color: var(--gold-dim); }
+button[type="submit"] {
+  width: 100%; padding: 10px; margin-top: 16px;
+  border: 1px solid var(--gold); border-radius: var(--radius-sm);
+  background: transparent; color: var(--gold);
+  font-family: var(--font-display); font-size: 14px;
+  font-weight: 600; letter-spacing: 0.08em;
+  cursor: pointer; transition: all var(--transition);
 }
-button:hover { background: #d63851; }
-.auth-link { text-align: center; margin-top: 16px; font-size: 13px; }
-.auth-link a { color: #4ea8de; }
-.error { color: #e94560; text-align: center; margin-top: 12px; }
+button[type="submit"]:hover { background: var(--gold); color: var(--bg-deep); }
+.auth-link { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-secondary); }
+.auth-link a { color: var(--gold); text-decoration: none; }
+.auth-link a:hover { color: var(--gold-light); }
+.error { color: var(--danger); text-align: center; margin-top: 14px; font-size: 14px; }
 </style>
