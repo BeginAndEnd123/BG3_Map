@@ -194,8 +194,8 @@ watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 </script>
 
 <style scoped>
-#map-container { width: 100%; height: 100%; background: #080812; }
-#map-container :deep(.leaflet-container) { background: #080812; }
+#map-container { width: 100%; height: 100%; background: #000; }
+#map-container :deep(.leaflet-container) { background: #000; }
 </style>
 
 <style>
