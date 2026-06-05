@@ -611,7 +611,7 @@ onBeforeUnmount(() => {
 .add-btn:hover { background: #ffed4a; }
 
 .recent-markers { margin-top: 16px; padding-top: 12px; border-top: 1px solid #333; }
-.recent-markers ul { list-style: none; margin-top: 6px; min-height: 120px; }
+.recent-markers ul { list-style: none; margin-top: 6px; height: 120px; overflow-y: auto; }
 .recent-markers li {
   display: flex; justify-content: space-between; align-items: center;
   padding: 4px 0; font-size: 12px; border-bottom: 1px solid #2a2a2a;
@@ -633,7 +633,7 @@ onBeforeUnmount(() => {
 .page-goto { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .page-goto input { width: 36px; height: 24px; padding: 0 4px; border: 1px solid #444; border-radius: 3px; background: #16213e; color: #eee; font-size: 12px; text-align: center; }
 .page-goto button { min-width: 24px; height: 24px; font-size: 12px; background: #ffd700; color: #1a1a2e; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
-.empty-text { font-size: 12px; color: #555; margin-top: 4px; }
+.empty-text { font-size: 12px; color: #555; margin-top: 4px; height: 120px; }
 
 .map-wrapper {
   flex: 1;
