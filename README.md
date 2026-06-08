@@ -44,6 +44,7 @@
 | 玩家 | 搜索标记 | 按名称模糊匹配找到目标点 |
 | 玩家 | 提交标记 | 向地图贡献新的标记点 |
 | 管理员 | 管理标记数据 | 新增、编辑、删除标记点信息 |
+| 管理员 | 管理分类 | 新增、编辑、删除标记分类和图标 |
 | 管理员 | 审核标记 | 审核玩家提交的标记，通过或拒绝 |
 
 ### 用户系统
@@ -94,8 +95,7 @@
 | id | INT PK AUTO_INCREMENT | 用户ID |
 | username | VARCHAR(50) UNIQUE NOT NULL | 用户名 |
 | password_hash | VARCHAR(255) NOT NULL | 密码哈希 (bcrypt) |
-| avatar | VARCHAR(255) | 头像URL |
-| is_admin | INT DEFAULT 0 | 是否管理员 (0/1) |
+| is_admin | BOOLEAN DEFAULT FALSE | 是否管理员 |
 | created_at | DATETIME DEFAULT NOW() | 创建时间 |
 
 ### 区域表 `regions`
@@ -116,7 +116,6 @@
 | id | INT PK AUTO_INCREMENT | 分类ID |
 | name | VARCHAR(50) NOT NULL | 分类名称 |
 | icon | VARCHAR(255) | 分类图标URL |
-| color | VARCHAR(7) | 标记颜色 (#RRGGBB) |
 | sort_order | INT DEFAULT 0 | 排序 |
 
 ### 标记点表 `markers`
@@ -162,6 +161,9 @@
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/categories` | 获取标记分类列表 |
+| POST | `/api/categories` | 新增分类（需管理员） |
+| PUT | `/api/categories/{id}` | 编辑分类（需管理员） |
+| DELETE | `/api/categories/{id}` | 删除分类（需管理员，有关联标记时不可删） |
 
 ### 标记模块 `/api/markers`
 
@@ -187,7 +189,7 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/upload` | 上传截图（需登录，JPG/PNG/GIF/WebP，≤5MB） |
+| POST | `/api/upload` | 上传截图/图标（需登录，JPG/PNG/GIF/WebP/SVG，≤5MB） |
 
 ## 项目结构
 
@@ -279,10 +281,10 @@ BG3_map/
 │           └── index.js
 ├── Map/                            # 各章节地图源图片 (PNG)
 │   ├── chapter0/                   # 序章 — 鹦鹉螺号（2张）
-│   ├── chapter1/                   # 第一章 — 林地、地精营地、幽暗地域（23张）
-│   ├── chapter2/                   # 第二章 — 伊雷珂养育间（3张）
-│   ├── chapter3/                   # 第三章 — 月出之塔、暗夜之歌监狱（13张）
-│   └── chapter4/                   # 第四章 — 博德之门（44张）
+│   ├── chapter1/                   # 第1章 — 林地、地精营地、幽暗地域（23张）
+│   ├── chapter2/                   # 第1.5章 — 伊雷珂养育间（3张）
+│   ├── chapter3/                   # 第2章 — 月出之塔、幽影诅咒之地（13张）
+│   └── chapter4/                   # 第3章 — 博德之门（44张）
 ├── TileMap/                        # 瓦片地图（切图工具生成，68,548 tiles）
 │   └── chapterX/地图名/{z}/{y}/{x}.png
 ├── tools/
