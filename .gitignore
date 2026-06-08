@@ -27,6 +27,14 @@ TileMap/
 项目相关报告以及截图/
 ISSUES.md
 
+# 报告和截图（不纳入版本控制）
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+backend/static/screenshots/*
+!backend/static/screenshots/.gitkeep
+
 # SSH keys (防止私钥泄露)
 id_rsa
 id_rsa.pub
