@@ -17,7 +17,7 @@ description: |
 | 文档 | 更新时机 |
 |------|----------|
 | `README.md` | 新增/删除/重命名文件 → 更新项目结构树；修改启动方式、数据库字段、API 接口 → 更新对应章节 |
-| `DEVELOPMENT.md` | 完成任务、修复审计问题 → 更新任务勾选和审计问题表；新增技术债务 → 追加到备忘 |
+| `docs/DEVELOPMENT.md` | 完成任务、修复审计问题 → 更新任务勾选和审计问题表；新增技术债务 → 追加到备忘 |
 | `.opencode/skills/bg3-map-dev/SKILL.md` | 上述内容变更导致项目上下文改变 → 同步更新技能中的架构说明、文件索引、约定、状态等 |
 
 这三份文档是项目的唯一真相来源，不同步会导致新会话产生错误认知。
@@ -65,9 +65,12 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location 'G:\
 ```
 G:\BG3_map/
 ├── README.md                        # 完整项目文档
-├── DEVELOPMENT.md                   # 开发跟踪（14 个任务全部已完成）
-├── PRD.md                           # 产品需求文档
 ├── ISSUES.md                        # 问题清单
+├── docs/                            # 说明类文档
+│   ├── DEVELOPMENT.md               # 开发跟踪（22 个任务全部已完成）
+│   ├── PRD.md                       # 产品需求文档
+│   ├── PROJECT.md                   # 项目详解
+│   └── 数据流程说明.md               # 注册数据流详解
 │
 ├── backend/
 │   ├── .env                         # DATABASE_URL, JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
@@ -177,7 +180,7 @@ G:\BG3_map/
 
 ## 当前开发状态
 
-DEVELOPMENT.md 中 **22 个任务全部已完成**：
+`docs/DEVELOPMENT.md` 中 **22 个任务全部已完成**：
 
 | 轮次 | 任务 | 状态 |
 |------|------|------|

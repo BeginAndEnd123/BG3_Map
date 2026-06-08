@@ -188,10 +188,12 @@ BG3_map/
 ├── .gitattributes
 ├── .gitignore
 ├── ISSUES.md                       # 问题清单 (79项)
-├── DEVELOPMENT.md                  # 开发跟踪文档
-├── PRD.md                          # 产品需求文档
-├── 数据流程说明.md                   # 注册数据流详解（含函数注释+名词解释）
 ├── README.md
+├── docs/                           # 说明类文档
+│   ├── PRD.md                      # 产品需求文档
+│   ├── DEVELOPMENT.md              # 开发跟踪文档
+│   ├── PROJECT.md                  # 项目详解
+│   └── 数据流程说明.md               # 注册数据流详解
 ├── backend/
 │   ├── .env                        # 环境变量
 │   ├── alembic.ini
