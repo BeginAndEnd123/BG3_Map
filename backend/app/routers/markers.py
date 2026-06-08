@@ -46,7 +46,10 @@ def count_markers(
 
 
 @router.get("/pending/count")
-def count_pending_markers(db: Session = Depends(get_db)):
+def count_pending_markers(
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
     return {"total": MarkerService.count_markers(db, status="pending")}
 
 
@@ -83,10 +86,7 @@ def review_marker(
     db: Session = Depends(get_db),
     _=Depends(require_admin),
 ):
-    try:
-        result = MarkerService.review_marker(db, marker_id, data.action)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    result = MarkerService.review_marker(db, marker_id, data.action)
     if result is None:
         raise HTTPException(status_code=404, detail="标记不存在")
     return result

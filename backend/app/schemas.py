@@ -7,7 +7,7 @@ Pydantic 数据校验与序列化 Schema
 import json
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, field_validator
 
 
@@ -54,7 +54,6 @@ class UserResponse(BaseModel):
     """用户信息响应"""
     id: int
     username: str
-    avatar: Optional[str] = None
     is_admin: bool = False
     created_at: datetime
 
@@ -73,7 +72,6 @@ class RegionResponse(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    tile_url: Optional[str] = None
     sort_order: int
     created_at: datetime
 
@@ -85,10 +83,23 @@ class CategoryResponse(BaseModel):
     id: int
     name: str
     icon: Optional[str] = None
-    color: Optional[str] = None
     sort_order: int
 
     model_config = {"from_attributes": True}
+
+
+class CategoryCreate(BaseModel):
+    """创建分类请求"""
+    name: str
+    icon: str
+    sort_order: int = 0
+
+
+class CategoryUpdate(BaseModel):
+    """更新分类请求"""
+    name: Optional[str] = None
+    icon: Optional[str] = None
+    sort_order: Optional[int] = None
 
 
 class MarkerCreate(BaseModel):
@@ -173,4 +184,4 @@ class MarkerResponse(BaseModel):
 
 class MarkerReview(BaseModel):
     """审核操作请求"""
-    action: str  # approve / reject
+    action: Literal["approve", "reject"]

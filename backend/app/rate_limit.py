@@ -3,6 +3,9 @@
 
 基于内存字典的简单速率限制器，用于防止暴力破解和滥用。
 每分钟最多允许 max_requests 次请求，字典最多保留 max_store_size 个 key。
+
+注意：此限流器基于进程内存，多 worker 部署（uvicorn --workers N）时各进程独立计数，
+限流粒度变为"每 worker N 次"。生产环境应改用 Redis 等共享存储实现分布式限流。
 """
 
 import time

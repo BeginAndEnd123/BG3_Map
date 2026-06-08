@@ -31,6 +31,10 @@ if _raw_algo not in _ALLOWED_ALGORITHMS:
     sys.exit(1)
 JWT_ALGORITHM = _raw_algo
 # JWT 过期时间，默认 24 小时 (分钟)
-JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES") or "1440")
+try:
+    JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
+except ValueError:
+    print("错误: JWT_EXPIRE_MINUTES 必须是整数", file=sys.stderr)
+    sys.exit(1)
 # CORS 允许的来源，逗号分隔
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]

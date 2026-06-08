@@ -52,7 +52,7 @@ export const useMapStore = defineStore('map', () => {
   async function addMarker(data) {
     try {
       const res = await createMarker(data)
-      markers.value.push(res.data)
+      markers.value = [...markers.value, res.data]
       return res.data
     } catch (e) {
       console.error('新增标记失败:', e)
@@ -97,9 +97,11 @@ export const useMapStore = defineStore('map', () => {
       const res = await apiReviewMarker(id, 'approve')
       const idx = markers.value.findIndex(m => m.id === id)
       if (idx !== -1) {
-        markers.value[idx] = res.data
+        const arr = [...markers.value]
+        arr[idx] = res.data
+        markers.value = arr
       } else {
-        markers.value.push(res.data)
+        markers.value = [...markers.value, res.data]
       }
       return res.data
     } catch (e) {
@@ -112,7 +114,11 @@ export const useMapStore = defineStore('map', () => {
     try {
       const res = await apiReviewMarker(id, 'reject')
       const idx = markers.value.findIndex(m => m.id === id)
-      if (idx !== -1) markers.value[idx] = res.data
+      if (idx !== -1) {
+        const arr = [...markers.value]
+        arr[idx] = res.data
+        markers.value = arr
+      }
       return res.data
     } catch (e) {
       console.error('审核拒绝失败:', e)
@@ -141,9 +147,13 @@ export const useMapStore = defineStore('map', () => {
 
   function mergeMarkers(list) {
     const existingIds = new Set(markers.value.map(m => m.id))
+    const added = []
     list.forEach(m => {
-      if (!existingIds.has(m.id)) markers.value.push(m)
+      if (!existingIds.has(m.id)) added.push(m)
     })
+    if (added.length > 0) {
+      markers.value = [...markers.value, ...added]
+    }
   }
 
   function setMarkers(list) {

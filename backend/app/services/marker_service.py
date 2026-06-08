@@ -234,8 +234,6 @@ class MarkerService:
         ).filter(Marker.id == marker_id).first()
         if not marker:
             return None
-        if action not in ('approve', 'reject'):
-            raise ValueError("action 必须为 approve 或 reject")
         marker.status = 'approved' if action == 'approve' else 'rejected'
         db.commit()
         db.refresh(marker)

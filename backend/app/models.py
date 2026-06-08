@@ -4,7 +4,7 @@ SQLAlchemy ORM 数据模型定义
 定义用户、区域、分类和标记点四张核心表及其关联关系。
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL, Index
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, DECIMAL, Index, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from .database import Base
@@ -17,8 +17,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    avatar = Column(String(255))
-    is_admin = Column(Integer, default=0)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     submitted_markers = relationship("Marker", back_populates="submitter")
@@ -31,7 +30,6 @@ class Region(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     description = Column(Text)
-    tile_url = Column(String(255))                # Leaflet 瓦片加载 URL 模板
     sort_order = Column(Integer, default=0)       # 排序序号 (序章=0, 第一章=1 ...)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -45,7 +43,6 @@ class Category(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     icon = Column(String(255))                    # 分类图标 SVG 路径
-    color = Column(String(7))                     # 标记点颜色，十六进制格式
     sort_order = Column(Integer, default=0)
 
     markers = relationship("Marker", back_populates="category")

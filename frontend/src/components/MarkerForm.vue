@@ -20,7 +20,7 @@
           <textarea v-model="form.description" placeholder="可选描述" rows="3"></textarea>
         </label>
         <div class="coord-info">
-          坐标：{{ form.x_coord.toFixed(2) }}, {{ form.y_coord.toFixed(2) }}
+          坐标：{{ (form.x_coord ?? 0).toFixed(2) }}, {{ (form.y_coord ?? 0).toFixed(2) }}
         </div>
         <label>
           截图
@@ -158,7 +158,11 @@ async function onFileSelect(e) {
   const files = e.target.files
   if (!files || files.length === 0) return
   uploadError.value = ''
+  if (uploadAbortController) uploadAbortController.abort()
+  uploadAbortController = new AbortController()
+  const signal = uploadAbortController.signal
   for (let i = 0; i < files.length; i++) {
+    if (signal.aborted) break
     if (!ALLOWED_FILE_TYPES.includes(files[i].type)) {
       uploadError.value = `${files[i].name} 格式不支持，仅限 JPG/PNG/GIF/WebP`
       continue
@@ -169,20 +173,18 @@ async function onFileSelect(e) {
     }
     uploading.value = true
     uploadProgress.value = `${i + 1}/${files.length}`
-    if (uploadAbortController) uploadAbortController.abort()
-    uploadAbortController = new AbortController()
     const fd = new FormData()
     fd.append('file', files[i])
     try {
-      const res = await api.post('/upload', fd, { signal: uploadAbortController.signal })
+      const res = await api.post('/upload', fd, { signal })
       form.images.push(res.data.url)
     } catch (err) {
       if (err.name !== 'CanceledError') {
         uploadError.value = `${files[i].name} 上传失败`
       }
     }
-    uploadAbortController = null
   }
+  uploadAbortController = null
   uploading.value = false
   uploadProgress.value = ''
 }

@@ -9,9 +9,11 @@ import { createPinia } from 'pinia'
 import 'leaflet/dist/leaflet.css'
 import App from './App.vue'
 import router from './router'
+import { setAxiosRouter } from './api/index'
 import './style.css'
 
 const app = createApp(App)
-app.use(createPinia())   // 全局状态管理
-app.use(router)           // 前端路由
+app.use(createPinia())
+app.use(router)
+setAxiosRouter(router)
 app.mount('#app')

@@ -21,7 +21,7 @@
         <h3>分类筛选</h3>
         <label v-for="c in mapStore.categories" :key="c.id" class="category-item">
           <input type="checkbox" :value="c.id" v-model="selectedCategoryIds" @change="reloadMarkers" />
-          <span :style="{ color: c.color }">{{ c.name }}</span>
+          <span>{{ c.name }}</span>
         </label>
       </div>
 
@@ -77,9 +77,8 @@
       <div v-if="isAdmin" class="review-section">
         <h3>审核管理</h3>
         <p class="review-count">待审核：{{ pendingCount }} 个</p>
-        <button class="review-toggle-btn" @click="openReviewModal">
-          打开审核面板
-        </button>
+        <button class="review-toggle-btn" @click="openReviewModal">打开审核面板</button>
+        <button class="review-toggle-btn" style="margin-top:4px" @click="showCategoryManager = true">分类管理</button>
       </div>
     </SidePanel>
 
@@ -92,6 +91,13 @@
       @approve="onApprove"
       @reject="onReject"
       @locate="onLocatePending"
+    />
+
+    <CategoryManager
+      :visible="showCategoryManager"
+      :categories="mapStore.categories"
+      @close="showCategoryManager = false"
+      @refresh="refreshCategories"
     />
 
     <div class="map-wrapper">
@@ -139,6 +145,7 @@ import MapContainer from '../components/MapContainer.vue'
 import MarkerPopup from '../components/MarkerPopup.vue'
 import MarkerForm from '../components/MarkerForm.vue'
 import ReviewModal from '../components/ReviewModal.vue'
+import CategoryManager from '../components/CategoryManager.vue'
 import { useMapNavigation } from '../composables/useMapNavigation'
 import { useMarkerSearch } from '../composables/useMarkerSearch'
 import { useRecentMarkers } from '../composables/useRecentMarkers'
@@ -166,16 +173,18 @@ const selectedCategoryName = computed(() => {
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.name || ''
 })
-const selectedCategoryColor = computed(() => {
-  if (!selectedMarker.value) return '#3388ff'
-  const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
-  return cat?.color || '#3388ff'
-})
+const selectedCategoryColor = computed(() => '#3388ff')
 
 const pendingMarkers = ref([])
 const pendingCount = ref(0)
 const showReviewModal = ref(false)
 const reviewLoading = ref(false)
+const showCategoryManager = ref(false)
+
+async function refreshCategories() {
+  await mapStore.fetchCategories()
+  showCategoryManager.value = false
+}
 
 async function fetchPendingMarkers() {
   reviewLoading.value = true
@@ -349,18 +358,19 @@ function closeReviewModal() {
 .map-page { display: flex; flex: 1; overflow: hidden; }
 
 :deep(h2) {
-  font-size: 17px; margin-bottom: 14px; color: var(--gold);
-  text-align: center; letter-spacing: 0.08em;
-  padding-bottom: 10px; border-bottom: 1px solid var(--border-gold);
+  font-size: 18px; margin: 0 0 16px; color: var(--gold);
+  text-align: center; letter-spacing: 0.1em;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border-gold);
+  text-shadow: 0 0 20px rgba(200,164,78,0.15);
 }
 :deep(h3) {
-  font-size: 11px; margin: 10px 0 4px; color: var(--text-secondary);
+  font-size: 11px; margin: 12px 0 5px; color: var(--text-secondary);
   font-family: var(--font-display); font-weight: 600; letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .region-select select, .map-select select {
-  width: 100%; padding: 5px 10px;
+  width: 100%; padding: 7px 10px;
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   background: var(--bg-input); color: var(--text-primary);
   font-size: 13px; font-family: var(--font-body);
@@ -374,7 +384,7 @@ function closeReviewModal() {
 .category-item {
   display: flex; align-items: center; gap: 5px;
   margin: 2px 0; cursor: pointer; font-size: 13px;
-  padding: 1px 4px; border-radius: var(--radius-sm);
+  padding: 2px 6px; border-radius: var(--radius-sm);
   transition: background var(--transition);
 }
 .category-item:hover { background: rgba(200,164,78,0.06); }
@@ -382,7 +392,7 @@ function closeReviewModal() {
 
 .search-box { position: relative; }
 .search-box input {
-  width: 100%; padding: 5px 10px;
+  width: 100%; padding: 7px 10px;
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   background: var(--bg-input); color: var(--text-primary);
   font-size: 13px; font-family: var(--font-body);
@@ -406,12 +416,13 @@ function closeReviewModal() {
 .sr-region { color: var(--text-muted); font-size: 11px; }
 
 .stats {
-  margin-top: 12px; padding-top: 10px;
+  margin-top: 14px; padding-top: 10px;
   border-top: 1px solid var(--border);
   font-size: 13px; color: var(--text-secondary);
 }
+.stats p { margin: 4px 0; }
 
-.recent-markers { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.recent-markers { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
 .recent-markers ul { list-style: none; margin-top: 2px; height: 110px; }
 .recent-markers li {
   display: flex; justify-content: space-between; align-items: center;
@@ -455,14 +466,15 @@ function closeReviewModal() {
 .page-goto button:hover { background: var(--gold-light); }
 
 .add-btn {
-  width: 100%; margin-top: 12px; padding: 8px;
-  border: 1px solid var(--gold); border-radius: var(--radius-sm);
-  background: transparent; color: var(--gold);
+  width: 100%; margin-top: 12px; padding: 9px;
+  border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(200,164,78,0.08) 0%, rgba(200,164,78,0.02) 100%);
+  color: var(--gold);
   font-family: var(--font-display); font-size: 12px;
   font-weight: 600; letter-spacing: 0.06em;
   cursor: pointer; transition: all var(--transition);
 }
-.add-btn:hover { background: var(--gold); color: var(--bg-deep); }
+.add-btn:hover { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
 
 .map-wrapper { flex: 1; position: relative; background: #000; }
 
@@ -500,18 +512,19 @@ function closeReviewModal() {
 .confirm-btn:hover { background: var(--gold-light); }
 
 .review-section {
-  margin-top: 8px; padding-top: 6px;
+  margin-top: 14px; padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 .review-count {
-  font-size: 12px; color: var(--warning, #e8a838); margin: 3px 0;
+  font-size: 13px; color: var(--warning, #e8a838); margin: 4px 0 6px;
 }
 .review-toggle-btn {
-  width: 100%; padding: 4px;
+  width: 100%; padding: 7px 12px; margin-bottom: 3px;
   border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
-  background: transparent; color: var(--gold);
-  font-family: var(--font-body); font-size: 11px;
+  background: linear-gradient(180deg, rgba(200,164,78,0.06) 0%, transparent 100%);
+  color: var(--gold-light);
+  font-family: var(--font-body); font-size: 12px;
   cursor: pointer; transition: all var(--transition);
 }
-.review-toggle-btn:hover { background: var(--gold); color: var(--bg-deep); }
+.review-toggle-btn:hover { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
 </style>

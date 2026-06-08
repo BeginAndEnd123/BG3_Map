@@ -97,16 +97,14 @@ function updateMarkers() {
   markerLayer.clearLayers()
   props.markers.forEach((m) => {
     const cat = props.categories.find((c) => c.id === m.category_id)
-    const color = cat?.color || m.category?.color || '#3388ff'
     const iconUrl = cat?.icon || m.category?.icon
     const isPending = m.status === 'pending'
-    // 优先使用分类 SVG 图标，否则用颜色圆点；待审核标记用橙色边框
     const icon = iconUrl
       ? L.icon({ iconUrl, iconSize: [24, 24], iconAnchor: [12, 12], className: isPending ? 'marker-pending' : '' })
       : L.divIcon({
           html: `<div style="
             width: 12px; height: 12px; border-radius: 50%;
-            background: ${color}; border: 2px solid ${isPending ? '#e8a838' : '#fff'};
+            background: #3388ff; border: 2px solid ${isPending ? '#e8a838' : '#fff'};
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
           "></div>`,
           iconSize: [12, 12],

@@ -1,8 +1,10 @@
 <template>
   <div class="marker-overlay" v-if="marker" @click.self="$emit('close')" @keydown.escape="$emit('close')">
-    <div class="marker-card" role="dialog" aria-modal="true" :aria-label="marker.name">
-      <button class="close-btn" @click="$emit('close')" aria-label="关闭">&times;</button>
-      <h3>{{ marker.name }}</h3>
+    <div class="marker-card" ref="card" :style="cardStyle" role="dialog" aria-modal="true" :aria-label="marker.name">
+      <div class="popup-header" @mousedown="onDragStart">
+        <h3>{{ marker.name }}</h3>
+        <button class="close-btn" @click="$emit('close')" aria-label="关闭">&times;</button>
+      </div>
       <span class="category-tag" :style="{ background: categoryColor }">
         {{ categoryName }}
       </span>
@@ -32,7 +34,7 @@
  * 支持截图点击放大预览。
  * 通过 actions 插槽接收外部操作按钮（如编辑/删除）。
  */
-import { ref, computed } from 'vue'
+import { ref, computed, reactive, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   marker: { type: Object, default: null },
@@ -42,8 +44,42 @@ const props = defineProps({
 
 defineEmits(['close'])
 
-const enlarged = ref(null)                      // 当前放大的截图索引（null=未放大）
+const enlarged = ref(null)
 const images = computed(() => props.marker?.images || [])
+
+const card = ref(null)
+const cardStyle = ref({})
+const dragging = ref(false)
+const offset = reactive({ x: 0, y: 0 })
+let startX = 0, startY = 0
+
+function onDragStart(e) {
+  if (e.target.closest('button')) return
+  e.preventDefault()
+  dragging.value = true
+  startX = e.clientX - offset.x
+  startY = e.clientY - offset.y
+  document.addEventListener('mousemove', onDragMove)
+  document.addEventListener('mouseup', onDragEnd)
+}
+
+function onDragMove(e) {
+  if (!dragging.value) return
+  offset.x = e.clientX - startX
+  offset.y = e.clientY - startY
+  cardStyle.value = { transform: `translate(${offset.x}px, ${offset.y}px)` }
+}
+
+function onDragEnd() {
+  dragging.value = false
+  document.removeEventListener('mousemove', onDragMove)
+  document.removeEventListener('mouseup', onDragEnd)
+}
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousemove', onDragMove)
+  document.removeEventListener('mouseup', onDragEnd)
+})
 </script>
 
 <style scoped>
@@ -55,15 +91,19 @@ const images = computed(() => props.marker?.images || [])
   background: var(--bg-surface); color: var(--text-primary);
   border: 1px solid var(--border-gold); border-radius: var(--radius-sm);
   padding: 24px; max-width: 360px; width: 90%; position: relative;
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--shadow-gold); cursor: default;
 }
+.popup-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; cursor: grab; user-select: none;
+}
+.popup-header:active { cursor: grabbing; }
 .close-btn {
-  position: absolute; top: 8px; right: 12px;
   background: none; border: none; color: var(--text-muted);
-  font-size: 22px; cursor: pointer; line-height: 1;
+  font-size: 22px; cursor: pointer; line-height: 1; padding: 0; margin-left: 12px;
 }
 .close-btn:hover { color: var(--gold); }
-.marker-card h3 { font-family: var(--font-display); font-size: 17px; margin-bottom: 8px; color: var(--gold); letter-spacing: 0.04em; }
+.marker-card h3 { font-family: var(--font-display); font-size: 17px; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
 .category-tag {
   display: inline-block; font-size: 11px; padding: 2px 10px;
   border-radius: 2px; color: #fff; margin-bottom: 10px;

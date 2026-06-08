@@ -24,14 +24,15 @@ const router = createRouter({
   routes,
 })
 
-// 全局前置守卫 — 未登录重定向到登录页
+// 全局前置守卫 — 验证 token 格式并且未登录重定向到登录页
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
+  const hasValidToken = token && token.split('.').length === 3
   if (WHITE_LIST.includes(to.name)) {
-    if (token) return next({ name: 'home' })   // 已登录则跳转首页
+    if (hasValidToken) return next({ name: 'home' })
     return next()
   }
-  if (!token) return next({ name: 'login' })
+  if (!hasValidToken) return next({ name: 'login' })
   next()
 })
 

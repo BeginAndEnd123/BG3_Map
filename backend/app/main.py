@@ -47,7 +47,8 @@ app.add_middleware(
 
 # 挂载瓦片地图静态资源目录
 tile_dir = Path(__file__).resolve().parent.parent.parent / "TileMap"
-app.mount("/TileMap", StaticFiles(directory=str(tile_dir)), name="tilemap")
+if tile_dir.is_dir():
+    app.mount("/TileMap", StaticFiles(directory=str(tile_dir)), name="tilemap")
 
 # 注册各功能模块路由
 app.include_router(auth.router)

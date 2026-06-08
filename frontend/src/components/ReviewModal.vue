@@ -51,7 +51,8 @@ let startY = 0
 const cardStyle = ref({})
 
 function onDragStart(e) {
-  if (e.target.tagName === 'BUTTON') return
+  if (e.target.closest('button')) return
+  e.preventDefault()
   dragging.value = true
   startX = e.clientX - offset.x
   startY = e.clientY - offset.y
