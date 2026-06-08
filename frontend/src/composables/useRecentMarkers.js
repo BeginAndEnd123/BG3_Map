@@ -18,13 +18,25 @@ export function useRecentMarkers(pageSize = 5) {
     const total = recentTotalPages.value
     const cur = recentPage.value
     const pages = []
-    if (total <= 7) {
+    if (total <= 5) {
       for (let i = 1; i <= total; i++) pages.push(i)
+      return pages
+    }
+    if (cur <= 3) {
+      pages.push(1); pages.push(2); pages.push(3); pages.push(4)
+      pages.push('…')
+      pages.push(total)
+    } else if (cur >= total - 2) {
+      pages.push(1)
+      pages.push('…')
+      for (let i = total - 3; i <= total; i++) pages.push(i)
     } else {
       pages.push(1)
-      if (cur > 3) pages.push('…')
-      for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
-      if (cur < total - 2) pages.push('…')
+      pages.push('…')
+      pages.push(cur - 1)
+      pages.push(cur)
+      pages.push(cur + 1)
+      pages.push('…')
       pages.push(total)
     }
     return pages

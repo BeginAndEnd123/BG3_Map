@@ -9,14 +9,24 @@ import time
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from .routers import auth, regions, categories, markers, maps, upload
 from .config import CORS_ORIGINS
 
 logger = logging.getLogger("bg3map")
 
 app = FastAPI(title="博德之门3 交互式地图", version="1.0.0")
+
+# 缺失瓦片的透明 PNG 占位图
+_TILE_PLACEHOLDER = bytes([
+    0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+    0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
+    0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x78,0x9C,0x63,0xF8,0x0F,0x00,0x00,
+    0x01,0x01,0x00,0x05,0x18,0xD8,0x4E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+    0x42,0x60,0x82
+])
 
 
 @app.middleware("http")
@@ -45,10 +55,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 挂载瓦片地图静态资源目录
-tile_dir = Path(__file__).resolve().parent.parent.parent / "TileMap"
-if tile_dir.is_dir():
-    app.mount("/TileMap", StaticFiles(directory=str(tile_dir)), name="tilemap")
+# 瓦片地图 — 自定义路由，缺失瓦片返回透明占位图避免 404 日志刷屏
+_tile_dir = Path(__file__).resolve().parent.parent.parent / "TileMap"
+
+@app.get("/TileMap/{rest:path}")
+async def serve_tile(rest: str):
+    path = (_tile_dir / rest).resolve()
+    if not str(path).startswith(str(_tile_dir.resolve())):
+        raise StarletteHTTPException(403)
+    if path.is_file():
+        return Response(content=path.read_bytes(), media_type="image/png")
+    return Response(content=_TILE_PLACEHOLDER, media_type="image/png", status_code=200)
 
 # 注册各功能模块路由
 app.include_router(auth.router)
