@@ -82,7 +82,7 @@
  * - 配置传送目标（选择目标区域和地图，输入坐标）
  * - 编辑模式下预填充已有数据
  */
-import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import api from '../api/index'
 import { CHAPTER_KEYS } from '../stores/map'
 
@@ -97,7 +97,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'submit'])
 
-const isEdit = !!props.marker                           // 是否为编辑模式
+const isEdit = computed(() => !!props.marker)
 const error = ref('')
 const uploading = ref(false)
 const uploadProgress = ref('')
@@ -149,7 +149,7 @@ watch(() => props.initialCoords, (coords) => {
     form.x_coord = coords.x
     form.y_coord = coords.y
   }
-}, { deep: true })
+})
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_FILE_SIZE = 5 * 1024 * 1024

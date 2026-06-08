@@ -1,7 +1,7 @@
 /** 标记点 CRUD API */
 import api from './index'
 
-export const getMarkers = (params) => api.get('/markers', { params })
+export const getMarkers = (params, config) => api.get('/markers', { params, ...config })
 export const getMarkerCount = (params) => api.get('/markers/count', { params })
 export const getPendingCount = () => api.get('/markers/pending/count')
 export const getMarker = (id) => api.get(`/markers/${id}`)

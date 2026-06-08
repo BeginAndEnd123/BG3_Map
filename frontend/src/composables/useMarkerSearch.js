@@ -12,6 +12,7 @@ export function useMarkerSearch() {
   const searchResults = ref([])
   let searchDebounce = null
   let blurTimer = null
+  let searchAbort = null
 
   async function onSearchInput() {
     showSearchResults.value = true
@@ -21,12 +22,15 @@ export function useMarkerSearch() {
     }
     if (searchDebounce) clearTimeout(searchDebounce)
     searchDebounce = setTimeout(async () => {
+      if (searchAbort) searchAbort.abort()
+      searchAbort = new AbortController()
       try {
-        const res = await getMarkers({ keyword: keyword.value })
+        const res = await getMarkers({ keyword: keyword.value }, { signal: searchAbort.signal })
         searchResults.value = res.data
       } catch (err) {
-        console.warn('搜索请求失败:', err)
-        searchResults.value = []
+        if (err.name !== 'CanceledError') {
+          console.warn('搜索请求失败:', err)
+        }
       }
     }, 300)
   }

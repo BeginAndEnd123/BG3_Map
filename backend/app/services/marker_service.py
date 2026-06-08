@@ -5,12 +5,15 @@ MarkerService — 标记点业务逻辑层
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from ..models import Marker, User
 from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse, parse_images
+
+logger = logging.getLogger("bg3map")
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "static" / "screenshots"
 _RESOLVED_UPLOAD_DIR = UPLOAD_DIR.resolve()
@@ -33,6 +36,8 @@ class MarkerService:
             part = part.strip()
             if part.isdigit():
                 ids.append(int(part))
+            elif part:
+                logger.warning("无效的分类 ID 已忽略: %r", part)
         return ids
 
     @staticmethod
@@ -114,8 +119,9 @@ class MarkerService:
             query = query.filter(Marker.status == status)
         if sort_by == "created_at":
             query = query.order_by(Marker.created_at.desc())
-        if limit is not None:
-            query = query.limit(limit)
+        else:
+            query = query.order_by(Marker.id.desc())
+        query = query.limit(limit)
         if offset is not None:
             query = query.offset(offset)
         return [MarkerService.to_response(m) for m in query.all()]

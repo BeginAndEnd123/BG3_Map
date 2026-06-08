@@ -24,7 +24,7 @@ if not JWT_SECRET_KEY:
     sys.exit(1)
 
 # JWT 加密算法
-_ALLOWED_ALGORITHMS = frozenset({"HS256", "HS384", "HS512", "RS256", "RS384", "RS512"})
+_ALLOWED_ALGORITHMS = frozenset({"HS256", "HS384", "HS512"})
 _raw_algo = os.getenv("JWT_ALGORITHM", "HS256")
 if _raw_algo not in _ALLOWED_ALGORITHMS:
     print(f"错误: JWT_ALGORITHM '{_raw_algo}' 不在允许的白名单中", file=sys.stderr)

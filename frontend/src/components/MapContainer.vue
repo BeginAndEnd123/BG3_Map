@@ -189,7 +189,7 @@ defineExpose({ flyTo, highlightMarker, resetView })
 
 // 监听 props 变化，自动更新地图
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
-watch(() => props.markers, () => updateMarkers(), { deep: true })
+watch(() => props.markers, () => updateMarkers())
 watch(() => props.pickMode, () => updatePickMode())
 watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 </script>

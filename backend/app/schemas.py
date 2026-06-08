@@ -106,6 +106,13 @@ class MarkerCreate(BaseModel):
     target_x: Optional[float] = None
     target_y: Optional[float] = None
 
+    @field_validator("x_coord", "y_coord")
+    @classmethod
+    def coords_valid(cls, v: float) -> float:
+        if v < -100000 or v > 100000:
+            raise ValueError("坐标值必须在 -100000 到 100000 之间")
+        return v
+
 
 class MarkerUpdate(BaseModel):
     """更新标记点请求，所有字段可选"""

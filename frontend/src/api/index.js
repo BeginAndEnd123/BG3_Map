@@ -22,9 +22,12 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// 响应拦截器 — 401 时重置登录态
+// 响应拦截器 — 成功时重置重定向标志，401 时跳转登录
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (isRedirecting) isRedirecting = false
+    return res
+  },
   (err) => {
     if (err.response?.status === 401 && !isRedirecting) {
       isRedirecting = true

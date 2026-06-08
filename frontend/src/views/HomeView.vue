@@ -209,7 +209,7 @@ async function onReject(id) {
   if (!confirm('确认拒绝该标记？')) return
   try {
     await mapStore.rejectMarker(id)
-    mapStore.markers = mapStore.markers.filter(m => m.id !== id)
+    mapStore.filterMarkers(m => m.id !== id)
     pendingMarkers.value = pendingMarkers.value.filter(m => m.id !== id)
     pendingCount.value = Math.max(0, pendingCount.value - 1)
   } catch (e) {
@@ -300,7 +300,11 @@ async function onMapChange() {
 // ── 初始化 ──
 onMounted(async () => {
   try {
-    await Promise.all([mapStore.fetchRegions(), mapStore.fetchCategories()])
+    await Promise.all([
+      mapStore.fetchRegions(),
+      mapStore.fetchCategories(),
+      authStore.fetchUser(),
+    ])
   } catch {
     console.error('初始化加载失败')
   }
@@ -321,15 +325,12 @@ onBeforeUnmount(() => {
 })
 
 function mergePendingToMap() {
-  const existingIds = new Set(mapStore.markers.map(m => m.id))
-  pendingMarkers.value.forEach(m => {
-    if (!existingIds.has(m.id)) mapStore.markers.push(m)
-  })
+  mapStore.mergeMarkers(pendingMarkers.value)
 }
 
 function removePendingFromMap() {
   const pendingIds = new Set(pendingMarkers.value.map(m => m.id))
-  mapStore.markers = mapStore.markers.filter(m => !pendingIds.has(m.id))
+  mapStore.filterMarkers(m => !pendingIds.has(m.id))
 }
 
 async function openReviewModal() {

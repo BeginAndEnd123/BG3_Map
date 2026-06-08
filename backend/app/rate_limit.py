@@ -6,6 +6,7 @@
 """
 
 import time
+import threading
 from fastapi import Request, HTTPException, status
 
 
@@ -16,6 +17,7 @@ class RateLimiter:
         self.max_store_size = max_store_size
         self._store: dict[str, list[float]] = {}
         self._hits = 0
+        self._lock = threading.Lock()
 
     def _clean(self, key: str, now: float) -> None:
         if key not in self._store:
@@ -32,26 +34,27 @@ class RateLimiter:
             del self._store[k]
 
     def is_allowed(self, key: str) -> bool:
-        now = time.time()
-        self._hits += 1
-        if self._hits % 1000 == 0:
-            self._full_clean(now)
-
-        is_new = key not in self._store
-        if is_new:
-            if len(self._store) >= self.max_store_size:
+        with self._lock:
+            now = time.time()
+            self._hits += 1
+            if self._hits % 1000 == 0:
                 self._full_clean(now)
-            if len(self._store) >= self.max_store_size:
-                return False
-            self._store[key] = []
 
-        self._clean(key, now)
-        if not self._store.get(key):
-            self._store[key] = []
-        if len(self._store[key]) >= self.max_requests:
-            return False
-        self._store[key].append(now)
-        return True
+            is_new = key not in self._store
+            if is_new:
+                if len(self._store) >= self.max_store_size:
+                    self._full_clean(now)
+                if len(self._store) >= self.max_store_size:
+                    return False
+                self._store[key] = []
+
+            self._clean(key, now)
+            if not self._store.get(key):
+                self._store[key] = []
+            if len(self._store[key]) >= self.max_requests:
+                return False
+            self._store[key].append(now)
+            return True
 
 
 _auth_limiter = RateLimiter(max_requests=10, window_seconds=60)

@@ -21,7 +21,7 @@ def list_markers(
     keyword: Optional[str] = Query(None),
     map_name: Optional[str] = Query(None),
     sort_by: Optional[str] = Query(None),
-    limit: Optional[int] = Query(None, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=1000),
     offset: Optional[int] = Query(None, ge=0),
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),

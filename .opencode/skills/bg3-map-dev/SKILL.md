@@ -160,7 +160,7 @@ G:\BG3_map/
 ### 前端
 - **路由守卫**: 白名单 `['login', 'register', 'not-found']`，已登录用户访问登录页自动跳转首页
 - **登录态恢复**: `App.vue` onMounted 调用 `authStore.fetchUser()` 用 localStorage token 验证
-- **401 处理**: axios 拦截器 `isRedirecting` 防重复标志，防止并发 401 多次跳转
+- **401 处理**: axios 拦截器 `isRedirecting` 防重复标志，成功响应时自动重置
 - **表单防护**: LoginView / RegisterView 均有 `submitting` 状态防重复提交
 - **全局错误**: App.vue 中 `onErrorCaptured` + hasError 遮罩 UI
 - **Leaflet**: CSS 从 unpkg CDN 加载，地图用 CRS.Simple 非地理坐标系统
@@ -180,7 +180,7 @@ G:\BG3_map/
 
 ## 当前开发状态
 
-`docs/DEVELOPMENT.md` 中 **25 个任务全部已完成**：
+`docs/DEVELOPMENT.md` 中 **32 个任务全部已完成**：
 
 | 轮次 | 任务 | 状态 |
 |------|------|------|
@@ -190,8 +190,8 @@ G:\BG3_map/
 | 第四轮 | 12-14: Alembic 迁移, 404 页面, 分类图标 | ✅ |
 | 第五轮 | 15-22: 安全加固, Bug修复, 组件优化, 无障碍 | ✅ |
 | 第六轮 | 23-25: 用户提交标记, 管理员审核, 状态展示 | ✅ |
-
-项目处于 **功能完整、含用户提交与审核工作流、安全强化、可正常运行** 状态。
+| 第七轮 | 26-31: 代码审查修复 (竞态/线程安全/校验/store 规范) | ✅ |
+| 第八轮 | 32: 仓库瘦身 (docs 本地保留) | ✅ |
 
 ## 技术债务
 

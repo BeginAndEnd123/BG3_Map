@@ -46,7 +46,6 @@ export const useMapStore = defineStore('map', () => {
       markers.value = res.data
     } catch (e) {
       console.error('获取标记列表失败:', e)
-      markers.value = []
     }
   }
 
@@ -136,10 +135,26 @@ export const useMapStore = defineStore('map', () => {
     return CHAPTER_KEYS[regionSortOrder] || ''
   }
 
+  function filterMarkers(predicate) {
+    markers.value = markers.value.filter(predicate)
+  }
+
+  function mergeMarkers(list) {
+    const existingIds = new Set(markers.value.map(m => m.id))
+    list.forEach(m => {
+      if (!existingIds.has(m.id)) markers.value.push(m)
+    })
+  }
+
+  function setMarkers(list) {
+    markers.value = list
+  }
+
   return {
     regions, categories, markers, maps, currentRegion, currentMap,
     fetchRegions, fetchCategories, fetchMarkers, setRegion, setMap,
     addMarker, editMarker, removeMarker, getChapterKey,
     submitUserMarker, approveMarker, rejectMarker,
+    filterMarkers, mergeMarkers, setMarkers,
   }
 })

@@ -37,7 +37,7 @@ export function useRecentMarkers(pageSize = 5) {
         getMarkerCount(),
       ])
       recentMarkers.value = res.data
-      recentTotal.value = countRes.data.total
+      recentTotal.value = countRes.data?.total ?? 0
     } catch {
       console.error('加载最新标记失败')
     }
