@@ -5,20 +5,12 @@
 import os
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
+from ..config import CHAPTER_MAP
 
 router = APIRouter(prefix="/api/maps", tags=["地图"])
 
 # TileMap 瓦片根目录
 TILE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "TileMap"
-
-# 章节名称映射
-CHAPTER_MAP = {
-    "chapter0": "序章",
-    "chapter1": "第1章",
-    "chapter2": "第1.5章",
-    "chapter3": "第2章",
-    "chapter4": "第3章",
-}
 
 
 @router.get("")

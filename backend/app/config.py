@@ -38,3 +38,12 @@ except ValueError:
     sys.exit(1)
 # CORS 允许的来源，逗号分隔
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+
+# 章节目录名到显示名称的映射（maps.py 和 seed.py 共用）
+CHAPTER_MAP = {
+    "chapter0": "序章",
+    "chapter1": "第1章",
+    "chapter2": "第1.5章",
+    "chapter3": "第2章",
+    "chapter4": "第3章",
+}

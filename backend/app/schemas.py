@@ -94,6 +94,16 @@ class CategoryCreate(BaseModel):
     icon: str
     sort_order: int = 0
 
+    @field_validator("name")
+    @classmethod
+    def name_valid(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 1:
+            raise ValueError("分类名称不能为空")
+        if len(v) > 20:
+            raise ValueError("分类名称不能超过20个字符")
+        return v
+
 
 class CategoryUpdate(BaseModel):
     """更新分类请求"""

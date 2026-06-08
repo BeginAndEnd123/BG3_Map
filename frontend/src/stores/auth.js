@@ -12,19 +12,29 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
 
   async function login(username, password) {
-    const res = await api.post('/auth/login', { username, password })
-    token.value = res.data.access_token
-    user.value = res.data.user
-    localStorage.setItem('token', token.value)
+    try {
+      const res = await api.post('/auth/login', { username, password })
+      token.value = res.data.access_token
+      user.value = res.data.user
+      localStorage.setItem('token', token.value)
+    } catch (e) {
+      console.error('登录失败:', e.response?.status, e.message)
+      throw e
+    }
   }
 
   async function register(username, password, confirmPassword) {
-    const res = await api.post('/auth/register', {
-      username, password, confirm_password: confirmPassword,
-    })
-    token.value = res.data.access_token
-    user.value = res.data.user
-    localStorage.setItem('token', token.value)
+    try {
+      const res = await api.post('/auth/register', {
+        username, password, confirm_password: confirmPassword,
+      })
+      token.value = res.data.access_token
+      user.value = res.data.user
+      localStorage.setItem('token', token.value)
+    } catch (e) {
+      console.error('注册失败:', e.response?.status, e.message)
+      throw e
+    }
   }
 
   async function fetchUser() {
