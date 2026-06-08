@@ -190,7 +190,7 @@ BG3_map/
 ├── ISSUES.md                       # 问题清单 (79项)
 ├── DEVELOPMENT.md                  # 开发跟踪文档
 ├── PRD.md                          # 产品需求文档
-├── 数据流程说明.md                   # 注册登录数据流详解
+├── 数据流程说明.md                   # 注册数据流详解（含函数注释+名词解释）
 ├── README.md
 ├── backend/
 │   ├── .env                        # 环境变量
@@ -210,7 +210,10 @@ BG3_map/
 │   │   ├── schemas.py              # Pydantic 请求/响应模型
 │   │   ├── auth.py                 # JWT 认证与密码哈希
 │   │   ├── rate_limit.py           # 请求频率限制
-│   │   ├── seed.py                 # 初始数据填充（admin账号、区域、分类）
+│   │   ├── seed.py                 # 初始数据填充（从 ADMIN_PASSWORD 环境变量读取管理员密码）
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   └── marker_service.py    # 标记点业务逻辑层 (CRUD/筛选/文件管理)
 │   │   └── routers/
 │   │       ├── __init__.py
 │   │       ├── auth.py             # 认证路由
@@ -237,12 +240,14 @@ BG3_map/
 │       ├── App.vue
 │       ├── style.css
 │       ├── api/
-│       │   ├── index.js            # axios 实例（含 JWT 拦截器）
-│       │   ├── auth.js             # 认证 API
-│       │   ├── regions.js          # 区域 API
-│       │   ├── categories.js       # 分类 API
-│       │   ├── markers.js          # 标记 API
-│       │   └── maps.js             # 地图列表 API
+│       │   ├── index.js            # axios 实例（JWT 拦截器 + 401 防重复跳转）
+│       │   └── markers.js          # 标记 CRUD API
+│       ├── composables/
+│       │   ├── useMapNavigation.js # 区域/地图切换 + 传送跳转
+│       │   ├── useMarkerSearch.js  # 搜索防抖 + 结果列表
+│       │   ├── useRecentMarkers.js # 最新标记 + 分页
+│       │   ├── usePickMode.js      # 坐标拾取模式
+│       │   └── useMarkerForm.js    # 标记表单提交/删除
 │       ├── components/
 │       │   ├── MapContainer.vue     # 地图容器
 │       │   ├── MarkerPopup.vue      # 标记详情弹窗
@@ -250,10 +255,11 @@ BG3_map/
 │       │   ├── NavBar.vue           # 导航栏（用户信息+登出）
 │       │   └── SidePanel.vue        # 侧边面板
 │       ├── views/
-│       │   ├── HomeView.vue         # 地图主页
+│       │   ├── HomeView.vue         # 地图主页 (280行，composable 驱动)
 │       │   ├── LoginView.vue        # 登录页
 │       │   ├── RegisterView.vue     # 注册页
-│       │   └── NotFoundView.vue     # 404 页面
+│       │   ├── NotFoundView.vue     # 404 页面
+│       │   └── auth.css             # 登录/注册共享样式
 │       ├── stores/
 │       │   ├── auth.js              # 认证状态 (Pinia)
 │       │   └── map.js               # 地图状态 (Pinia)

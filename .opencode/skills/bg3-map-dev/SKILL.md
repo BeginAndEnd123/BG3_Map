@@ -84,7 +84,9 @@ G:\BG3_map/
 │       ├── schemas.py               # Pydantic: 请求/响应模型，UserResponse 含 is_admin
 │       ├── auth.py                  # JWT 创建/验证, get_current_user, require_admin 依赖
 │       ├── rate_limit.py            # 请求频率限制
-│       ├── seed.py                  # 种子数据: admin 账号, 区域, 分类 (每次运行覆盖)
+│       ├── seed.py                  # 种子数据: 从环境变量 ADMIN_PASSWORD 读取管理员密码
+│       ├── services/
+│       │   └── marker_service.py    # 标记点业务逻辑层 (CRUD/筛选/文件安全删除)
 │       └── routers/
 │           ├── auth.py              # /api/auth/register, login, me (返回 is_admin)
 │           ├── regions.py           # /api/regions CRUD
@@ -105,22 +107,25 @@ G:\BG3_map/
 │       ├── App.vue                  # 根组件: <NavBar> + <RouterView>, onMounted 调用 fetchUser()
 │       ├── style.css                # 全局样式
 │       ├── api/
-│       │   ├── index.js             # axios 实例, baseURL=/api, JWT 拦截器 (401→window.location.href)
-│       │   ├── auth.js              # login, register, getMe
-│       │   ├── regions.js           # getRegions, getRegion
-│       │   ├── categories.js        # getCategories
-│       │   ├── markers.js           # getMarkers, getMarker, createMarker, updateMarker, deleteMarker
-│       │   └── maps.js              # getMaps
+│       │   ├── index.js             # axios 实例, baseURL=/api, JWT 拦截器 + 401 防重复
+│       │   └── markers.js           # getMarkers, getMarker, createMarker, updateMarker, deleteMarker
+│       ├── composables/
+│       │   ├── useMapNavigation.js  # 区域/地图切换 + 传送跳转
+│       │   ├── useMarkerSearch.js   # 搜索防抖 + 结果选中
+│       │   ├── useRecentMarkers.js  # 最新标记列表 + 分页
+│       │   ├── usePickMode.js       # 管理员坐标拾取
+│       │   └── useMarkerForm.js     # 表单提交/编辑/删除
 │       ├── stores/
 │       │   ├── auth.js              # user, token, fetchUser(), logout()
 │       │   └── map.js               # regions, maps, categories, markers, addMarker/removeMarker/editMarker
 │       ├── router/
 │       │   └── index.js             # 路由: /home /login /register /404; beforeEach 鉴权守卫
 │       ├── views/
-│       │   ├── HomeView.vue         # 主地图页: 集成 MapContainer+SidePanel+MarkerPopup+MarkerForm
+│       │   ├── HomeView.vue         # 主地图页: composable 驱动 (useMapNavigation/Search/Recent/Pick/Form)
 │       │   ├── LoginView.vue
 │       │   ├── RegisterView.vue
-│       │   └── NotFoundView.vue     # 404 页面
+│       │   ├── NotFoundView.vue     # 404 页面
+│       │   └── auth.css             # 登录/注册共享样式
 │       └── components/
 │           ├── MapContainer.vue     # Leaflet 地图封装 (CRS.Simple, 瓦片层, 标记渲染, 点击事件)
 │           ├── MarkerPopup.vue      # 标记详情弹窗 (描述/截图/坐标/管理操作)
