@@ -6,8 +6,11 @@
       <span class="category-tag" :style="{ background: categoryColor }">
         {{ categoryName }}
       </span>
+      <span v-if="marker.status === 'pending'" class="status-tag pending">待审核</span>
+      <span v-else-if="marker.status === 'rejected'" class="status-tag rejected">已拒绝</span>
       <p v-if="marker.description" class="desc">{{ marker.description }}</p>
       <p class="coords">坐标: ({{ marker.x_coord }}, {{ marker.y_coord }})</p>
+      <p v-if="marker.submitter_name" class="submitter">提交者: {{ marker.submitter_name }}</p>
       <div v-if="images.length > 0" class="image-gallery">
         <img v-for="(url, i) in images" :key="i" :src="url" :alt="marker.name + ' 截图'" class="screenshot" @click="enlarged = enlarged === i ? null : i" />
         <div v-if="enlarged !== null" class="enlarged-overlay" @click="enlarged = null">
@@ -66,8 +69,16 @@ const images = computed(() => props.marker?.images || [])
   border-radius: 2px; color: #fff; margin-bottom: 10px;
   font-weight: 600; letter-spacing: 0.05em;
 }
+.status-tag {
+  display: inline-block; font-size: 10px; padding: 2px 8px;
+  border-radius: 2px; margin-left: 6px; margin-bottom: 10px;
+  font-weight: 600; letter-spacing: 0.05em; vertical-align: top;
+}
+.status-tag.pending { background: #6b4c1e; color: #e8a838; border: 1px solid #e8a838; }
+.status-tag.rejected { background: #5c1a1a; color: #e06060; border: 1px solid #e06060; }
 .desc { font-size: 14px; color: var(--text-secondary); margin: 8px 0; line-height: 1.6; }
 .coords { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.submitter { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .image-gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .screenshot { width: calc(50% - 3px); height: 80px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border); }
 .screenshot:hover { opacity: 0.85; }

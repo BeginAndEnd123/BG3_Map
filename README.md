@@ -42,7 +42,9 @@
 | 玩家 | 浏览游戏地图 | 查看各区域地形与地标 |
 | 玩家 | 查找标记点 | 快速定位 NPC、传送点、怪物、道具位置 |
 | 玩家 | 搜索标记 | 按名称模糊匹配找到目标点 |
+| 玩家 | 提交标记 | 向地图贡献新的标记点 |
 | 管理员 | 管理标记数据 | 新增、编辑、删除标记点信息 |
+| 管理员 | 审核标记 | 审核玩家提交的标记，通过或拒绝 |
 
 ### 用户系统
 - 用户注册 / 登录（JWT 认证）
@@ -57,9 +59,12 @@
 ### 标记系统
 - 标记点展示（图标 + 名称 + 坐标）
 - 标记分类：传送点、怪物、道具
-- 点击标记显示详情弹窗（描述、坐标、所属区域）
+- 点击标记显示详情弹窗（描述、坐标、所属区域、状态标签、提交者）
 - 标记搜索（按名称模糊匹配）
+- 普通用户提交标记（需管理员审核通过后显示）
+- 管理员审核面板（待审核列表、通过/拒绝操作）
 - 管理员新增/编辑/删除标记
+- 待审核标记以橙色边框标识，弹窗显示状态标签
 
 ### 数据面板
 - 各类标记数量统计
@@ -131,6 +136,8 @@
 | target_map_name | VARCHAR(100) | 传送目标子地图名 |
 | target_x | DECIMAL(10,2) | 传送目标 X 坐标 |
 | target_y | DECIMAL(10,2) | 传送目标 Y 坐标 |
+| status | VARCHAR(20) DEFAULT 'approved' | 审核状态 (pending/approved/rejected) |
+| submitted_by | INT FK → users.id | 提交者 ID (管理员直接添加为 null) |
 | created_at | DATETIME DEFAULT NOW() | 创建时间 |
 
 ## API 接口设计
@@ -160,10 +167,13 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/markers` | 查询标记（支持 `region_id` `category_id`(逗号多选) `keyword` `map_name` 筛选，`limit`≤1000） |
-| GET | `/api/markers/count` | 统计满足条件的标记总数 |
-| GET | `/api/markers/{id}` | 获取标记详情 |
-| POST | `/api/markers` | 新增标记（需管理员） |
+| GET | `/api/markers` | 查询标记（支持 `region_id` `category_id`(逗号多选) `keyword` `map_name` `status` `sort_by` 筛选，`limit`≤1000，默认只返回已审核） |
+| GET | `/api/markers/count` | 统计已审核标记总数 |
+| GET | `/api/markers/pending/count` | 统计待审核标记数量 |
+| GET | `/api/markers/{id}` | 获取标记详情（含提交者信息） |
+| POST | `/api/markers` | 管理员直接新增标记（自动通过，需管理员） |
+| POST | `/api/markers/user-submit` | 普通用户提交标记（需登录，自动设为待审核） |
+| POST | `/api/markers/{id}/review` | 审核标记（需管理员，action=approve/reject） |
 | PUT | `/api/markers/{id}` | 编辑标记（需管理员） |
 | DELETE | `/api/markers/{id}` | 删除标记（需管理员） |
 

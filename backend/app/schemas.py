@@ -155,7 +155,15 @@ class MarkerResponse(BaseModel):
     target_x: Optional[float] = None
     target_y: Optional[float] = None
     created_at: datetime
+    status: str = 'approved'
+    submitted_by: Optional[int] = None
+    submitter_name: Optional[str] = None
     region: Optional[RegionResponse] = None
     category: Optional[CategoryResponse] = None
 
     model_config = {"from_attributes": True}
+
+
+class MarkerReview(BaseModel):
+    """审核操作请求"""
+    action: str  # approve / reject

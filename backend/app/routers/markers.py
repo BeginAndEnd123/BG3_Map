@@ -6,8 +6,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse
-from ..auth import require_admin
+from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse, MarkerReview
+from ..auth import get_current_user, require_admin
+from ..models import User
 from ..services.marker_service import MarkerService
 
 router = APIRouter(prefix="/api/markers", tags=["标记"])
@@ -22,10 +23,14 @@ def list_markers(
     sort_by: Optional[str] = Query(None),
     limit: Optional[int] = Query(None, ge=1, le=1000),
     offset: Optional[int] = Query(None, ge=0),
+    status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    if status is not None and status != 'approved' and not current_user.is_admin:
+        status = 'approved'
     return MarkerService.list_markers(
-        db, region_id, category_id, keyword, map_name, sort_by, limit, offset,
+        db, region_id, category_id, keyword, map_name, sort_by, limit, offset, status,
     )
 
 
@@ -38,6 +43,11 @@ def count_markers(
     db: Session = Depends(get_db),
 ):
     return {"total": MarkerService.count_markers(db, region_id, category_id, keyword, map_name)}
+
+
+@router.get("/pending/count")
+def count_pending_markers(db: Session = Depends(get_db)):
+    return {"total": MarkerService.count_markers(db, status="pending")}
 
 
 @router.get("/{marker_id}", response_model=MarkerResponse)
@@ -55,6 +65,31 @@ def create_marker(
     _=Depends(require_admin),
 ):
     return MarkerService.create_marker(db, data)
+
+
+@router.post("/user-submit", response_model=MarkerResponse, status_code=201)
+def user_submit_marker(
+    data: MarkerCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return MarkerService.user_submit_marker(db, data, current_user.id)
+
+
+@router.post("/{marker_id}/review", response_model=MarkerResponse)
+def review_marker(
+    marker_id: int,
+    data: MarkerReview,
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
+    try:
+        result = MarkerService.review_marker(db, marker_id, data.action)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if result is None:
+        raise HTTPException(status_code=404, detail="标记不存在")
+    return result
 
 
 @router.put("/{marker_id}", response_model=MarkerResponse)

@@ -3,7 +3,10 @@ import api from './index'
 
 export const getMarkers = (params) => api.get('/markers', { params })
 export const getMarkerCount = (params) => api.get('/markers/count', { params })
+export const getPendingCount = () => api.get('/markers/pending/count')
 export const getMarker = (id) => api.get(`/markers/${id}`)
 export const createMarker = (data) => api.post('/markers', data)
+export const userSubmitMarker = (data) => api.post('/markers/user-submit', data)
 export const updateMarker = (id, data) => api.put(`/markers/${id}`, data)
 export const deleteMarker = (id) => api.delete(`/markers/${id}`)
+export const reviewMarker = (id, action) => api.post(`/markers/${id}/review`, { action })

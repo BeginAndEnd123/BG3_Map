@@ -27,9 +27,9 @@
           <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" @change="onFileSelect" />
           <div v-if="uploading" class="upload-status">上传中... ({{ uploadProgress }})</div>
           <div v-if="form.images.length > 0" class="image-grid">
-            <div v-for="url in form.images" :key="url" class="image-item">
+            <div v-for="(url, idx) in form.images" :key="url" class="image-item">
               <img :src="url" class="upload-preview" />
-              <button type="button" class="img-remove" @click="removeImage(i)">&times;</button>
+              <button type="button" class="img-remove" @click="removeImage(idx)">&times;</button>
             </div>
           </div>
           <div v-if="uploadError" class="form-error">{{ uploadError }}</div>
@@ -108,7 +108,7 @@ let uploadAbortController = null
 
 const form = reactive({
   name: '',
-  category_id: props.categories[0]?.id || '',
+  category_id: props.categories[0]?.id || null,
   description: '',
   x_coord: 0,
   y_coord: 0,
@@ -137,6 +137,9 @@ onMounted(async () => {
   } else if (props.initialCoords) {
     form.x_coord = props.initialCoords.x
     form.y_coord = props.initialCoords.y
+    if (!form.category_id && props.categories.length > 0) {
+      form.category_id = props.categories[0].id
+    }
   }
 })
 

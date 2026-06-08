@@ -22,14 +22,16 @@ export function useMarkerForm() {
     formSubmitting.value = false
   }
 
-  async function onFormSubmit(data, selectedMapName) {
+  async function onFormSubmit(data, selectedMapName, isAdmin = true) {
     formSubmitting.value = true
     try {
       const payload = { ...data, map_name: selectedMapName }
       if (editingMarker.value) {
         await mapStore.editMarker(editingMarker.value.id, payload)
-      } else {
+      } else if (isAdmin) {
         await mapStore.addMarker(payload)
+      } else {
+        await mapStore.submitUserMarker(payload)
       }
       closeForm()
       return true

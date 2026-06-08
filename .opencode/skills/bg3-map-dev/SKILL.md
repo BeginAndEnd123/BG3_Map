@@ -94,7 +94,7 @@ G:\BG3_map/
 │           ├── auth.py              # /api/auth/register, login, me (返回 is_admin)
 │           ├── regions.py           # /api/regions CRUD
 │           ├── categories.py        # /api/categories
-│           ├── markers.py           # /api/markers CRUD (CUD 需 require_admin)
+│           ├── markers.py           # /api/markers CRUD + user-submit + review (CUD 需 require_admin, 审核需管理员)
 │           ├── maps.py              # /api/maps 地图列表
 │           └── upload.py            # /api/upload 截图上传
 │
@@ -111,30 +111,30 @@ G:\BG3_map/
 │       ├── style.css                # 全局样式
 │       ├── api/
 │       │   ├── index.js             # axios 实例, baseURL=/api, JWT 拦截器 + 401 防重复
-│       │   └── markers.js           # getMarkers, getMarker, createMarker, updateMarker, deleteMarker
+│       │   └── markers.js           # getMarkers, getPendingCount, createMarker, userSubmitMarker, updateMarker, deleteMarker, reviewMarker
 │       ├── composables/
 │       │   ├── useMapNavigation.js  # 区域/地图切换 + 传送跳转
 │       │   ├── useMarkerSearch.js   # 搜索防抖 + 结果选中
 │       │   ├── useRecentMarkers.js  # 最新标记列表 + 分页
 │       │   ├── usePickMode.js       # 管理员坐标拾取
-│       │   └── useMarkerForm.js     # 表单提交/编辑/删除
+│       │   └── useMarkerForm.js     # 表单提交/编辑/删除 (支持管理员/普通用户两种提交模式)
 │       ├── stores/
 │       │   ├── auth.js              # user, token, fetchUser(), logout()
-│       │   └── map.js               # regions, maps, categories, markers, addMarker/removeMarker/editMarker
+│       │   └── map.js               # regions, maps, categories, markers, addMarker/editMarker/removeMarker/submitUserMarker/approveMarker/rejectMarker
 │       ├── router/
 │       │   └── index.js             # 路由: /home /login /register /404; beforeEach 鉴权守卫
 │       ├── views/
-│       │   ├── HomeView.vue         # 主地图页: composable 驱动 (useMapNavigation/Search/Recent/Pick/Form)
+│       │   ├── HomeView.vue         # 主地图页: composable 驱动 + 审核面板 (useMapNavigation/Search/Recent/Pick/Form + 审核管理)
 │       │   ├── LoginView.vue
 │       │   ├── RegisterView.vue
 │       │   ├── NotFoundView.vue     # 404 页面
 │       │   └── auth.css             # 登录/注册共享样式
 │       └── components/
-│           ├── MapContainer.vue     # Leaflet 地图封装 (CRS.Simple, 瓦片层, 标记渲染, 点击事件)
-│           ├── MarkerPopup.vue      # 标记详情弹窗 (描述/截图/坐标/管理操作)
-│           ├── MarkerForm.vue       # 新增/编辑标记表单 (含截图上传、传送目标配置)
+│           ├── MapContainer.vue     # Leaflet 地图封装 (CRS.Simple, 瓦片层, 标记渲染含待审核橙色边框, 点击事件)
+│           ├── MarkerPopup.vue      # 标记详情弹窗 (描述/截图/坐标/状态标签/提交者/管理操作)
+│           ├── MarkerForm.vue       # 新增/编辑标记表单 (含截图上传、传送目标配置, 修复 removeImage bug)
 │           ├── NavBar.vue           # 顶栏: 品牌名, 用户名, 管理员徽章, 登出
-│           └── SidePanel.vue        # 侧边面板: 区域/地图选择, 分类筛选, 搜索, 统计
+│           └── SidePanel.vue        # 侧边面板: 区域/地图选择, 分类筛选, 搜索, 统计, 审核管理
 │
 ├── Map/                             # 源图 PNG (97 张, chapter0-4)
 ├── TileMap/                         # 切好的瓦片 (~68,548 tiles), URL: /TileMap/{chapter}/{map}/{z}/{y}/{x}.png
@@ -149,7 +149,7 @@ G:\BG3_map/
 ## 架构决策与约定
 
 ### 后端
-- **权限模型**: User 表用 `is_admin` (Integer, 0/1) 区分角色，`require_admin` 依赖注入保护 CUD 端点
+- **权限模型**: User 表用 `is_admin` (Integer, 0/1) 区分角色，`require_admin` 依赖注入保护 CUD 和审核端点；普通用户通过 `/api/markers/user-submit` 提交标记，自动设为 `pending` 状态
 - **认证流**: JWT token 存储在 localStorage，登录时返回；`get_current_user` 从 Authorization header 解码，捕获 JWTError/ValueError/TypeError
 - **配置安全**: JWT_SECRET_KEY / DATABASE_URL 无默认值，缺失启动报错；JWT_ALGORITHM 白名单校验；CORS origins 自动 strip 空格
 - **API 前缀**: 所有 API 路由带 `/api` 前缀
@@ -164,13 +164,13 @@ G:\BG3_map/
 - **表单防护**: LoginView / RegisterView 均有 `submitting` 状态防重复提交
 - **全局错误**: App.vue 中 `onErrorCaptured` + hasError 遮罩 UI
 - **Leaflet**: CSS 从 unpkg CDN 加载，地图用 CRS.Simple 非地理坐标系统
-- **图标渲染**: MapContainer 优先 `L.icon` 加载 SVG 图标，无图标时回退 `L.divIcon` 纯色圆点
+- **图标渲染**: MapContainer 优先 `L.icon` 加载 SVG 图标，无图标时回退 `L.divIcon` 纯色圆点；待审核标记用橙色边框区分
 - **分类图标路径**: `public/icons/` (waypoint.svg, monster.svg, item.svg)，seed.py 中预设了 `/icons/xxx.svg` 路径
 - **无障碍**: 搜索/弹窗/列表支持 ARIA 属性和键盘导航 (Esc/Enter/Space)
 
 ### 数据库
 - 连接字符串: `mysql+pymysql://root:root@localhost:3306/bg3_map`
-- 表: `users`(含 is_admin), `regions`, `categories`, `markers`(外键 region_id, category_id, x_coord/y_coord)
+- 表: `users`(含 is_admin), `regions`, `categories`, `markers`(外键 region_id, category_id, submitted_by, 含 status/坐标等)
 - 坐标系统: map 的 bounds 在 maps 表中定义 `[[-4096,0],[4096,8192]]`，坐标在标记中以像素为单位
 
 ### 瓦片地图
@@ -180,7 +180,7 @@ G:\BG3_map/
 
 ## 当前开发状态
 
-`docs/DEVELOPMENT.md` 中 **22 个任务全部已完成**：
+`docs/DEVELOPMENT.md` 中 **25 个任务全部已完成**：
 
 | 轮次 | 任务 | 状态 |
 |------|------|------|
@@ -189,8 +189,9 @@ G:\BG3_map/
 | 第三轮 | 8-11: 管理员权限, CRUD 前端, 登出, 加载状态 | ✅ |
 | 第四轮 | 12-14: Alembic 迁移, 404 页面, 分类图标 | ✅ |
 | 第五轮 | 15-22: 安全加固, Bug修复, 组件优化, 无障碍 | ✅ |
+| 第六轮 | 23-25: 用户提交标记, 管理员审核, 状态展示 | ✅ |
 
-项目处于 **功能完整、安全强化、可正常运行** 状态。
+项目处于 **功能完整、含用户提交与审核工作流、安全强化、可正常运行** 状态。
 
 ## 技术债务
 

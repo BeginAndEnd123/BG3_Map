@@ -18,8 +18,10 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     avatar = Column(String(255))
-    is_admin = Column(Integer, default=0)         # 0=普通用户, 1=管理员
+    is_admin = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    submitted_markers = relationship("Marker", back_populates="submitter")
 
 
 class Region(Base):
@@ -66,12 +68,16 @@ class Marker(Base):
     target_map_name = Column(String(100), default='')      # 传送目标子地图名称
     target_x = Column(DECIMAL(10, 2), nullable=True)       # 传送目标 X 坐标
     target_y = Column(DECIMAL(10, 2), nullable=True)       # 传送目标 Y 坐标
+    status = Column(String(20), default='approved')         # 审核状态: pending/approved/rejected
+    submitted_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # 提交者 (admin 直接添加时为 null)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     region = relationship("Region", back_populates="markers")
     category = relationship("Category", back_populates="markers")
+    submitter = relationship("User", back_populates="submitted_markers")
 
     __table_args__ = (
         Index("ix_markers_region_map_category", "region_id", "map_name", "category_id"),
         Index("ix_markers_map_name", "map_name"),
+        Index("ix_markers_status", "status"),
     )

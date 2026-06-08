@@ -6,8 +6,8 @@
 
 | 模块 | 完成度 | 状态 |
 |------|--------|------|
-| 后端 API | 100% | 全部完成，含 Service 层、请求日志、安全加固 |
-| 前端页面 | 100% | 全部完成，5 composable 拆分、API 合并、CSS 去重 |
+| 后端 API | 100% | 全部完成，含 Service 层、用户提交、管理员审核 |
+| 前端页面 | 100% | 全部完成，5 composable 拆分、审核面板、状态标签 |
 | 地图数据 | 100% | 97 张源图，瓦片已全部切片 |
 | 切图工具 | 100% | 支持全量/增量/多进程 |
 
@@ -146,6 +146,35 @@
   - 搜索结果和最新标记列表支持键盘导航 (tabindex/Enter/Space)
   - 弹窗/MarkerPopup/MarkerForm 支持 Esc 键关闭
   - 关闭按钮添加 aria-label
+
+### 第六轮：用户标记与审核 (2026-06-08)
+
+- [x] **23. 普通用户提交标记**
+  - 文件: `backend/app/routers/markers.py:70-76` — `POST /api/markers/user-submit` 端点
+  - 文件: `backend/app/services/marker_service.py:200-217` — `user_submit_marker()` 方法
+  - 文件: `frontend/src/api/markers.js` — 新增 `userSubmitMarker()` API 函数
+  - 文件: `frontend/src/stores/map.js:86-94` — 新增 `submitUserMarker` action
+  - 文件: `frontend/src/composables/useMarkerForm.js:25-49` — `onFormSubmit` 支持 `isAdmin` 参数，非管理员走提交通道
+  - 文件: `frontend/src/views/HomeView.vue:73` — "提交标记"按钮对所有登录用户可见
+  - 目的: 普通用户可以向地图贡献标记，提交后自动设为"待审核"状态
+
+- [x] **24. 管理员审核标记**
+  - 文件: `backend/app/routers/markers.py:48-50` — `GET /api/markers/pending/count` 端点
+  - 文件: `backend/app/routers/markers.py:79-92` — `POST /api/markers/{id}/review` 端点
+  - 文件: `backend/app/services/marker_service.py:219-235` — `review_marker()` 方法
+  - 文件: `frontend/src/api/markers.js` — 新增 `getPendingCount()`, `reviewMarker()` API
+  - 文件: `frontend/src/stores/map.js:96-118` — 新增 `approveMarker`, `rejectMarker` action
+  - 文件: `frontend/src/views/HomeView.vue:75-95,175-218,305-307` — 审核面板 UI，含待审核列表和通过/拒绝按钮
+  - 目的: 管理员可在侧栏审核管理区域查看待审核标记并批量处理
+
+- [x] **25. 标记状态展示与安全加固**
+  - 文件: `backend/app/routers/markers.py:30-31` — 非管理员传非 approved 状态自动降级
+  - 文件: `backend/app/services/marker_service.py:110-113,130-133` — `list_markers` / `count_markers` 默认只返回已审核标记
+  - 文件: `frontend/src/components/MapContainer.vue:101-102` — 待审核标记以橙色边框渲染
+  - 文件: `frontend/src/components/MarkerPopup.vue:8-9,12` — 弹窗显示"待审核"/"已拒绝"状态标签及提交者信息
+  - 文件: `backend/app/schemas.py:167-169` — `MarkerReview` Pydantic schema
+  - 文件: `backend/app/models.py:71-72` — Marker 模型已有 `status` 和 `submitted_by` 字段
+  - 目的: 前端可视化区分标记状态，后端确保普通用户只能看到已审核标记
 
 ---
 

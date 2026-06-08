@@ -1,14 +1,15 @@
 """
 MarkerService — 标记点业务逻辑层
 
-将筛选、CRUD、文件管理从路由中抽离，路由只做 HTTP 关注点。
+将筛选、CRUD、文件管理、审核从路由中抽离，路由只做 HTTP 关注点。
 """
 
 import json
 from pathlib import Path
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
-from ..models import Marker
+from sqlalchemy import or_
+from ..models import Marker, User
 from ..schemas import MarkerCreate, MarkerUpdate, MarkerResponse, parse_images
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "static" / "screenshots"
@@ -57,7 +58,6 @@ class MarkerService:
 
     @staticmethod
     def to_response(marker: Marker) -> MarkerResponse:
-        """显式字段映射，告别 __table__.columns 魔数"""
         return MarkerResponse(
             id=marker.id,
             region_id=marker.region_id,
@@ -72,6 +72,9 @@ class MarkerService:
             target_map_name=marker.target_map_name or '',
             target_x=float(marker.target_x) if marker.target_x is not None else None,
             target_y=float(marker.target_y) if marker.target_y is not None else None,
+            status=marker.status or 'approved',
+            submitted_by=marker.submitted_by,
+            submitter_name=marker.submitter.username if marker.submitter else None,
             created_at=marker.created_at,
             region=marker.region,
             category=marker.category,
@@ -97,12 +100,18 @@ class MarkerService:
         db: Session,
         region_id=None, category_id=None, keyword=None,
         map_name=None, sort_by=None, limit=None, offset=None,
+        status=None,
     ) -> list[MarkerResponse]:
         query = db.query(Marker).options(
             joinedload(Marker.region),
             joinedload(Marker.category),
+            joinedload(Marker.submitter),
         )
         query = MarkerService._apply_filters(query, region_id, category_id, keyword, map_name)
+        if status is None:
+            query = query.filter(or_(Marker.status == 'approved', Marker.status.is_(None)))
+        elif status != 'all':
+            query = query.filter(Marker.status == status)
         if sort_by == "created_at":
             query = query.order_by(Marker.created_at.desc())
         if limit is not None:
@@ -114,11 +123,15 @@ class MarkerService:
     @staticmethod
     def count_markers(
         db: Session, region_id=None, category_id=None,
-        keyword=None, map_name=None,
+        keyword=None, map_name=None, status=None,
     ) -> int:
         query = MarkerService._apply_filters(
             db.query(Marker), region_id, category_id, keyword, map_name,
         )
+        if status is None:
+            query = query.filter(or_(Marker.status == 'approved', Marker.status.is_(None)))
+        elif status != 'all':
+            query = query.filter(Marker.status == status)
         return query.count()
 
     @staticmethod
@@ -126,6 +139,7 @@ class MarkerService:
         marker = db.query(Marker).options(
             joinedload(Marker.region),
             joinedload(Marker.category),
+            joinedload(Marker.submitter),
         ).filter(Marker.id == marker_id).first()
         if not marker:
             return None
@@ -140,6 +154,11 @@ class MarkerService:
         db.add(marker)
         db.commit()
         db.refresh(marker)
+        marker = db.query(Marker).options(
+            joinedload(Marker.region),
+            joinedload(Marker.category),
+            joinedload(Marker.submitter),
+        ).filter(Marker.id == marker.id).first()
         return MarkerService.to_response(marker)
 
     @staticmethod
@@ -147,6 +166,7 @@ class MarkerService:
         marker = db.query(Marker).options(
             joinedload(Marker.region),
             joinedload(Marker.category),
+            joinedload(Marker.submitter),
         ).filter(Marker.id == marker_id).first()
         if not marker:
             return None
@@ -175,3 +195,42 @@ class MarkerService:
         for url in urls:
             MarkerService._safe_delete_file(url)
         return urls
+
+    # ── 用户提交 ──
+
+    @staticmethod
+    def user_submit_marker(db: Session, data: MarkerCreate, user_id: int) -> MarkerResponse:
+        payload = data.model_dump(exclude={'images'})
+        marker = Marker(
+            **payload,
+            screenshot=json.dumps(data.images, ensure_ascii=False),
+            status='pending',
+            submitted_by=user_id,
+        )
+        db.add(marker)
+        db.commit()
+        db.refresh(marker)
+        marker = db.query(Marker).options(
+            joinedload(Marker.region),
+            joinedload(Marker.category),
+            joinedload(Marker.submitter),
+        ).filter(Marker.id == marker.id).first()
+        return MarkerService.to_response(marker)
+
+    # ── 审核 ──
+
+    @staticmethod
+    def review_marker(db: Session, marker_id: int, action: str) -> MarkerResponse:
+        marker = db.query(Marker).options(
+            joinedload(Marker.region),
+            joinedload(Marker.category),
+            joinedload(Marker.submitter),
+        ).filter(Marker.id == marker_id).first()
+        if not marker:
+            return None
+        if action not in ('approve', 'reject'):
+            raise ValueError("action 必须为 approve 或 reject")
+        marker.status = 'approved' if action == 'approve' else 'rejected'
+        db.commit()
+        db.refresh(marker)
+        return MarkerService.to_response(marker)

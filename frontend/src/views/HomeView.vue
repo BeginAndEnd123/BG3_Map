@@ -70,8 +70,29 @@
         </div>
       </div>
 
-      <button v-if="isAdmin" class="add-btn" @click="onStartAdd">+ 新增标记</button>
+      <button v-if="authStore.user" class="add-btn" @click="onStartAdd">
+        + {{ isAdmin ? '新增标记' : '提交标记' }}
+      </button>
+
+      <div v-if="isAdmin" class="review-section">
+        <h3>审核管理</h3>
+        <p class="review-count">待审核：{{ pendingCount }} 个</p>
+        <button class="review-toggle-btn" @click="openReviewModal">
+          打开审核面板
+        </button>
+      </div>
     </SidePanel>
+
+    <ReviewModal
+      :visible="showReviewModal"
+      :pending-markers="pendingMarkers"
+      :pending-count="pendingCount"
+      :loading="reviewLoading"
+      @close="closeReviewModal"
+      @approve="onApprove"
+      @reject="onReject"
+      @locate="onLocatePending"
+    />
 
     <div class="map-wrapper">
       <MapContainer ref="mapRef" :tile-url="tileUrl" :max-zoom="mapMaxZoom"
@@ -117,11 +138,13 @@ import SidePanel from '../components/SidePanel.vue'
 import MapContainer from '../components/MapContainer.vue'
 import MarkerPopup from '../components/MarkerPopup.vue'
 import MarkerForm from '../components/MarkerForm.vue'
+import ReviewModal from '../components/ReviewModal.vue'
 import { useMapNavigation } from '../composables/useMapNavigation'
 import { useMarkerSearch } from '../composables/useMarkerSearch'
 import { useRecentMarkers } from '../composables/useRecentMarkers'
 import { usePickMode } from '../composables/usePickMode'
 import { useMarkerForm } from '../composables/useMarkerForm'
+import { getMarkers, getPendingCount } from '../api/markers'
 
 const mapStore = useMapStore()
 const authStore = useAuthStore()
@@ -148,6 +171,60 @@ const selectedCategoryColor = computed(() => {
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.color || '#3388ff'
 })
+
+const pendingMarkers = ref([])
+const pendingCount = ref(0)
+const showReviewModal = ref(false)
+const reviewLoading = ref(false)
+
+async function fetchPendingMarkers() {
+  reviewLoading.value = true
+  try {
+    const [listRes, countRes] = await Promise.all([
+      getMarkers({ status: 'pending', limit: 100 }),
+      getPendingCount(),
+    ])
+    pendingMarkers.value = listRes.data
+    pendingCount.value = countRes.data.total
+  } catch {
+    pendingMarkers.value = []
+    pendingCount.value = 0
+  } finally {
+    reviewLoading.value = false
+  }
+}
+
+async function onApprove(id) {
+  try {
+    await mapStore.approveMarker(id)
+    pendingMarkers.value = pendingMarkers.value.filter(m => m.id !== id)
+    pendingCount.value = Math.max(0, pendingCount.value - 1)
+    await recent.fetchRecentMarkers()
+  } catch (e) {
+    alert(e.response?.data?.detail || '审核失败')
+  }
+}
+
+async function onReject(id) {
+  if (!confirm('确认拒绝该标记？')) return
+  try {
+    await mapStore.rejectMarker(id)
+    mapStore.markers = mapStore.markers.filter(m => m.id !== id)
+    pendingMarkers.value = pendingMarkers.value.filter(m => m.id !== id)
+    pendingCount.value = Math.max(0, pendingCount.value - 1)
+  } catch (e) {
+    alert(e.response?.data?.detail || '审核失败')
+  }
+}
+
+async function onLocatePending(marker) {
+  selectedMarker.value = marker
+  await nav.switchToRegion(
+    marker.region_id, marker.map_name,
+    marker.x_coord, marker.y_coord, mapRef,
+  )
+  closeReviewModal()
+}
 
 // ── 分类筛选 ──
 function reloadMarkers() {
@@ -182,10 +259,13 @@ function onConfirmPick() {
 
 // ── 表单 ──
 async function onFormSubmit(data) {
-  const ok = await form.onFormSubmit(data, nav.selectedMapName.value)
+  const ok = await form.onFormSubmit(data, nav.selectedMapName.value, isAdmin.value)
   if (ok) {
     pick.reset()
     await recent.fetchRecentMarkers()
+    if (!isAdmin.value) {
+      alert('标记已提交，等待管理员审核')
+    }
   }
 }
 function onFormClose() {
@@ -231,11 +311,37 @@ onMounted(async () => {
   }
   await nav.loadMarkers()
   recent.fetchRecentMarkers()
+  if (isAdmin.value) {
+    fetchPendingMarkers()
+  }
 })
 
 onBeforeUnmount(() => {
   search.cleanup()
 })
+
+function mergePendingToMap() {
+  const existingIds = new Set(mapStore.markers.map(m => m.id))
+  pendingMarkers.value.forEach(m => {
+    if (!existingIds.has(m.id)) mapStore.markers.push(m)
+  })
+}
+
+function removePendingFromMap() {
+  const pendingIds = new Set(pendingMarkers.value.map(m => m.id))
+  mapStore.markers = mapStore.markers.filter(m => !pendingIds.has(m.id))
+}
+
+async function openReviewModal() {
+  showReviewModal.value = true
+  await fetchPendingMarkers()
+  mergePendingToMap()
+}
+
+function closeReviewModal() {
+  showReviewModal.value = false
+  removePendingFromMap()
+}
 </script>
 
 <style scoped>
@@ -391,4 +497,20 @@ onBeforeUnmount(() => {
   transition: background var(--transition);
 }
 .confirm-btn:hover { background: var(--gold-light); }
+
+.review-section {
+  margin-top: 8px; padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.review-count {
+  font-size: 12px; color: var(--warning, #e8a838); margin: 3px 0;
+}
+.review-toggle-btn {
+  width: 100%; padding: 4px;
+  border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
+  background: transparent; color: var(--gold);
+  font-family: var(--font-body); font-size: 11px;
+  cursor: pointer; transition: all var(--transition);
+}
+.review-toggle-btn:hover { background: var(--gold); color: var(--bg-deep); }
 </style>

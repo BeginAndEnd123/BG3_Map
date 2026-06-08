@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../api/index'
-import { getMarkers, createMarker, updateMarker, deleteMarker } from '../api/markers'
+import { getMarkers, createMarker, updateMarker, deleteMarker, userSubmitMarker, reviewMarker as apiReviewMarker } from '../api/markers'
 
 // 章节索引到目录名的映射，按 sort_order 顺序
 export const CHAPTER_KEYS = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
@@ -83,6 +83,44 @@ export const useMapStore = defineStore('map', () => {
     }
   }
 
+  async function submitUserMarker(data) {
+    try {
+      const res = await userSubmitMarker(data)
+      return res.data
+    } catch (e) {
+      console.error('提交标记失败:', e)
+      throw e
+    }
+  }
+
+  async function approveMarker(id) {
+    try {
+      const res = await apiReviewMarker(id, 'approve')
+      const idx = markers.value.findIndex(m => m.id === id)
+      if (idx !== -1) {
+        markers.value[idx] = res.data
+      } else {
+        markers.value.push(res.data)
+      }
+      return res.data
+    } catch (e) {
+      console.error('审核通过失败:', e)
+      throw e
+    }
+  }
+
+  async function rejectMarker(id) {
+    try {
+      const res = await apiReviewMarker(id, 'reject')
+      const idx = markers.value.findIndex(m => m.id === id)
+      if (idx !== -1) markers.value[idx] = res.data
+      return res.data
+    } catch (e) {
+      console.error('审核拒绝失败:', e)
+      throw e
+    }
+  }
+
   function setRegion(region) {
     currentRegion.value = region
     currentMap.value = null
@@ -102,5 +140,6 @@ export const useMapStore = defineStore('map', () => {
     regions, categories, markers, maps, currentRegion, currentMap,
     fetchRegions, fetchCategories, fetchMarkers, setRegion, setMap,
     addMarker, editMarker, removeMarker, getChapterKey,
+    submitUserMarker, approveMarker, rejectMarker,
   }
 })
