@@ -204,7 +204,7 @@ BG3_map/
 │   ├── PRD.md                      # 产品需求文档
 │   ├── DEVELOPMENT.md              # 开发跟踪文档
 │   ├── PROJECT.md                  # 项目详解
-│   ├── ISSUES.md                   # 问题清单 (79项)
+│   ├── ISSUES.md                   # 问题清单 (87项)
 │   └── 数据流程说明.md               # 注册数据流详解
 ├── backend/
 │   ├── .env                        # 环境变量
@@ -246,9 +246,10 @@ BG3_map/
 │   ├── public/
 │   │   ├── favicon.svg
 │   │   └── icons/
-│   │       ├── waypoint.svg        # 传送点图标
-│   │       ├── monster.svg         # 怪物图标
-│   │       └── item.svg            # 道具图标
+│       │   ├── waypoint.svg        # 传送点图标
+│       │   ├── monster.svg         # 怪物图标
+│       │   ├── item.svg            # 道具图标
+│       │   └── merchant.svg        # 商人图标
 │   └── src/
 │       ├── main.js
 │       ├── App.vue
@@ -266,10 +267,12 @@ BG3_map/
 │       │   ├── MapContainer.vue     # 地图容器
 │       │   ├── MarkerPopup.vue      # 标记详情弹窗
 │       │   ├── MarkerForm.vue       # 标记新增/编辑表单
+│       │   ├── ReviewModal.vue       # 审核拖拽弹窗
+│       │   ├── CategoryManager.vue   # 分类增删改弹窗
 │       │   ├── NavBar.vue           # 导航栏（用户信息+登出）
 │       │   └── SidePanel.vue        # 侧边面板
 │       ├── views/
-│       │   ├── HomeView.vue         # 地图主页 (280行，composable 驱动)
+│       │   ├── HomeView.vue         # 地图主页 (536行，composable 驱动)
 │       │   ├── LoginView.vue        # 登录页
 │       │   ├── RegisterView.vue     # 注册页
 │       │   ├── NotFoundView.vue     # 404 页面
