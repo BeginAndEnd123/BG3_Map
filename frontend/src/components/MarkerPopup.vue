@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
 }
 .status-tag.pending { background: #6b4c1e; color: #e8a838; border: 1px solid #e8a838; }
 .status-tag.rejected { background: #5c1a1a; color: #e06060; border: 1px solid #e06060; }
-.desc { font-size: 14px; color: var(--text-secondary); margin: 8px 0; line-height: 1.6; }
+.desc { font-size: 14px; color: var(--text-secondary); margin: 8px 0; line-height: 1.6; white-space: pre-wrap; }
 .coords { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 .submitter { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .image-gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }

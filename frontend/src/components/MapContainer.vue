@@ -159,7 +159,15 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (highlightTimer) clearTimeout(highlightTimer)
-  if (map) { map.remove(); map = null }
+  if (map) {
+    map.off('click', _onMapClick)
+    if (pickMarker) {
+      pickMarker.off('dragend')
+      pickMarker = null
+    }
+    map.remove()
+    map = null
+  }
 })
 
 /** 平滑飞行到指定坐标 (使用 props.maxZoom 而非 map.getMaxZoom) */

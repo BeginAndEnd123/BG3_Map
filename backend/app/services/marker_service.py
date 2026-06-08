@@ -142,11 +142,7 @@ class MarkerService:
 
     @staticmethod
     def get_marker(db: Session, marker_id: int) -> MarkerResponse:
-        marker = db.query(Marker).options(
-            joinedload(Marker.region),
-            joinedload(Marker.category),
-            joinedload(Marker.submitter),
-        ).filter(Marker.id == marker_id).first()
+        marker = MarkerService._get_with_relations(db, marker_id)
         if not marker:
             return None
         return MarkerService.to_response(marker)
@@ -154,26 +150,25 @@ class MarkerService:
     # ── 写操作 ──
 
     @staticmethod
+    def _get_with_relations(db: Session, marker_id: int):
+        return db.query(Marker).options(
+            joinedload(Marker.region),
+            joinedload(Marker.category),
+            joinedload(Marker.submitter),
+        ).filter(Marker.id == marker_id).first()
+
+    @staticmethod
     def create_marker(db: Session, data: MarkerCreate) -> MarkerResponse:
         payload = data.model_dump(exclude={'images'})
         marker = Marker(**payload, screenshot=json.dumps(data.images, ensure_ascii=False))
         db.add(marker)
         db.commit()
-        db.refresh(marker)
-        marker = db.query(Marker).options(
-            joinedload(Marker.region),
-            joinedload(Marker.category),
-            joinedload(Marker.submitter),
-        ).filter(Marker.id == marker.id).first()
+        marker = MarkerService._get_with_relations(db, marker.id)
         return MarkerService.to_response(marker)
 
     @staticmethod
     def update_marker(db: Session, marker_id: int, data: MarkerUpdate) -> MarkerResponse:
-        marker = db.query(Marker).options(
-            joinedload(Marker.region),
-            joinedload(Marker.category),
-            joinedload(Marker.submitter),
-        ).filter(Marker.id == marker_id).first()
+        marker = MarkerService._get_with_relations(db, marker_id)
         if not marker:
             return None
         for key, value in data.model_dump(exclude={'images'}, exclude_unset=True).items():
@@ -185,7 +180,6 @@ class MarkerService:
             to_delete = old_urls - new_urls
             marker.screenshot = json.dumps(data.images, ensure_ascii=False)
         db.commit()
-        db.refresh(marker)
         for url in to_delete:
             MarkerService._safe_delete_file(url)
         return MarkerService.to_response(marker)
@@ -215,23 +209,14 @@ class MarkerService:
         )
         db.add(marker)
         db.commit()
-        db.refresh(marker)
-        marker = db.query(Marker).options(
-            joinedload(Marker.region),
-            joinedload(Marker.category),
-            joinedload(Marker.submitter),
-        ).filter(Marker.id == marker.id).first()
+        marker = MarkerService._get_with_relations(db, marker.id)
         return MarkerService.to_response(marker)
 
     # ── 审核 ──
 
     @staticmethod
     def review_marker(db: Session, marker_id: int, action: str) -> MarkerResponse:
-        marker = db.query(Marker).options(
-            joinedload(Marker.region),
-            joinedload(Marker.category),
-            joinedload(Marker.submitter),
-        ).filter(Marker.id == marker_id).first()
+        marker = MarkerService._get_with_relations(db, marker_id)
         if not marker:
             return None
         marker.status = 'approved' if action == 'approve' else 'rejected'

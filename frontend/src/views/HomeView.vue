@@ -121,7 +121,7 @@
     </div>
 
     <MarkerPopup v-if="selectedMarker" :marker="selectedMarker"
-      :category-name="selectedCategoryName" :category-color="selectedCategoryColor"
+      :category-name="selectedCategoryName"
       @close="selectedMarker = null">
       <template #actions v-if="isAdmin">
         <button class="action-btn edit" @click="onEdit(selectedMarker)">编辑</button>
@@ -174,7 +174,7 @@ const selectedCategoryName = computed(() => {
   const cat = mapStore.categories.find(c => c.id === selectedMarker.value.category_id)
   return cat?.name || ''
 })
-const selectedCategoryColor = computed(() => '#3388ff')
+
 
 const pendingMarkers = ref([])
 const pendingCount = ref(0)
