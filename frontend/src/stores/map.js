@@ -63,8 +63,7 @@ export const useMapStore = defineStore('map', () => {
   async function editMarker(id, data) {
     try {
       const res = await updateMarker(id, data)
-      const idx = markers.value.findIndex(m => m.id === id)
-      if (idx !== -1) markers.value[idx] = res.data
+      markers.value = markers.value.map(m => m.id === id ? res.data : m)
       return res.data
     } catch (e) {
       console.error('编辑标记失败:', e)

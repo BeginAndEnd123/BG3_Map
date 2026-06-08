@@ -1,5 +1,5 @@
 <template>
-  <div class="overlay" v-if="visible" @click.self="$emit('close')" @keydown.escape="$emit('close')">
+  <div class="overlay" v-if="visible" @click.self="onOverlayClose" @keydown.escape="onOverlayClose">
     <div class="card" ref="card" :style="cardStyle" role="dialog" aria-modal="true" aria-label="分类管理">
       <div class="card-header" @mousedown="onDragStart">
         <h3>分类管理</h3>
@@ -65,6 +65,7 @@ const uploadingIcon = ref(false)
 const editingId = ref(null)
 
 async function onAdd() {
+  if (submitting.value) return
   error.value = ''
   if (!form.name.trim()) return
   if (!form.icon) {
@@ -97,6 +98,11 @@ function cancelEdit() {
   editingId.value = null
   form.name = ''
   form.icon = ''
+}
+
+function onOverlayClose() {
+  if (dragging.value) onDragEnd()
+  emit('close')
 }
 
 async function onDelete(cat) {

@@ -1,5 +1,5 @@
 <template>
-  <div class="marker-overlay" v-if="marker" @click.self="$emit('close')" @keydown.escape="$emit('close')">
+  <div class="marker-overlay" v-if="marker" @click.self="onOverlayClose" @keydown.escape="onOverlayClose">
     <div class="marker-card" ref="card" :style="cardStyle" role="dialog" aria-modal="true" :aria-label="marker.name">
       <div class="popup-header" @mousedown="onDragStart">
         <h3>{{ marker.name }}</h3>
@@ -42,7 +42,7 @@ const props = defineProps({
   categoryColor: { type: String, default: '#3388ff' },
 })
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const enlarged = ref(null)
 const images = computed(() => props.marker?.images || [])
@@ -74,6 +74,11 @@ function onDragEnd() {
   dragging.value = false
   document.removeEventListener('mousemove', onDragMove)
   document.removeEventListener('mouseup', onDragEnd)
+}
+
+function onOverlayClose() {
+  if (dragging.value) onDragEnd()
+  emit('close')
 }
 
 onBeforeUnmount(() => {

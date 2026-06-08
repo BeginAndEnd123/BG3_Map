@@ -101,6 +101,13 @@ class CategoryUpdate(BaseModel):
     icon: Optional[str] = None
     sort_order: Optional[int] = None
 
+    @field_validator("sort_order")
+    @classmethod
+    def sort_order_valid(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and v < 0:
+            raise ValueError("sort_order 不能为负数")
+        return v
+
 
 class MarkerCreate(BaseModel):
     """创建标记点请求"""
@@ -154,7 +161,7 @@ def parse_images(raw: Optional[str]) -> list[str]:
             return []
         return result
     except (json.JSONDecodeError, TypeError):
-        return [raw]
+        return []
 
 
 class MarkerResponse(BaseModel):

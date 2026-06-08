@@ -1,5 +1,5 @@
 <template>
-  <div class="review-overlay" v-if="visible" @keydown.escape="$emit('close')">
+  <div class="review-overlay" v-if="visible" @keydown.escape="onOverlayClose">
     <div class="review-card" ref="card" :style="cardStyle" role="dialog" aria-modal="true" aria-label="审核管理">
       <div class="card-header" @mousedown="onDragStart">
         <h3>审核管理</h3>
@@ -20,8 +20,8 @@
             </span>
           </div>
           <div class="review-actions">
-            <button class="btn-approve" @click.stop="$emit('approve', m.id)">通过</button>
-            <button class="btn-reject" @click.stop="$emit('reject', m.id)">拒绝</button>
+            <button class="btn-approve" :disabled="reviewingId === m.id" @click.stop="onReview(m.id, 'approve')">通过</button>
+            <button class="btn-reject" :disabled="reviewingId === m.id" @click.stop="onReview(m.id, 'reject')">拒绝</button>
           </div>
         </li>
       </ul>
@@ -40,7 +40,17 @@ defineProps({
   loading: { type: Boolean, default: false },
 })
 
-defineEmits(['close', 'approve', 'reject', 'locate'])
+const emit = defineEmits(['close', 'approve', 'reject', 'locate'])
+
+const reviewingId = ref(null)
+
+function onReview(id, action) {
+  if (reviewingId.value) return
+  reviewingId.value = id
+  emit(action, id)
+}
+
+defineExpose({ resetReview: () => { reviewingId.value = null } })
 
 const card = ref(null)
 const dragging = ref(false)
@@ -71,6 +81,11 @@ function onDragEnd() {
   dragging.value = false
   document.removeEventListener('mousemove', onDragMove)
   document.removeEventListener('mouseup', onDragEnd)
+}
+
+function onOverlayClose() {
+  if (dragging.value) onDragEnd()
+  emit('close')
 }
 
 onBeforeUnmount(() => {

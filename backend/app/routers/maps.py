@@ -14,10 +14,10 @@ TILE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "TileMap"
 # 章节名称映射
 CHAPTER_MAP = {
     "chapter0": "序章",
-    "chapter1": "第一章",
-    "chapter2": "第二章",
-    "chapter3": "第三章",
-    "chapter4": "第四章",
+    "chapter1": "第1章",
+    "chapter2": "第1.5章",
+    "chapter3": "第2章",
+    "chapter4": "第3章",
 }
 
 

@@ -29,10 +29,10 @@ def seed():
         # 五个游戏章节区域
         regions = [
             Region(name="序章", description="鹦鹉螺式魔法船", sort_order=0),
-            Region(name="第一章", description="林地、地精营地、幽暗地域等", sort_order=1),
-            Region(name="第二章", description="伊雷珂养育间", sort_order=2),
-            Region(name="第三章", description="月出之塔、暗夜之歌监狱等", sort_order=3),
-            Region(name="第四章", description="博德之门", sort_order=4),
+            Region(name="第1章", description="林地、地精营地、幽暗地域", sort_order=1),
+            Region(name="第1.5章", description="伊雷珂养育间", sort_order=2),
+            Region(name="第2章", description="幽影诅咒之地、月出之塔", sort_order=3),
+            Region(name="第3章", description="博德之门", sort_order=4),
         ]
         db.add_all(regions)
 
@@ -53,7 +53,7 @@ def seed():
         admin = User(
             username="admin",
             password_hash=hash_password(admin_password),
-            is_admin=1,
+            is_admin=True,
         )
         db.add(admin)
 

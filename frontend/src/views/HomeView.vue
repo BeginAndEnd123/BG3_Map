@@ -50,7 +50,7 @@
           <li v-for="m in recent.recentMarkers.value" :key="m.id" role="button" tabindex="0"
             @click="onRecentClick(m)" @keydown.enter.prevent="onRecentClick(m)" @keydown.space.prevent="onRecentClick(m)">
             <span class="recent-name">{{ m.name }}</span>
-            <span class="recent-region">{{ m.region?.name || '' }}</span>
+            <span class="recent-meta">{{ m.category?.name || '' }}{{ m.category?.name && m.region?.name ? ' · ' : '' }}{{ m.region?.name || '' }}</span>
           </li>
         </ul>
         <p v-else class="empty-text">暂无标记</p>
@@ -83,6 +83,7 @@
     </SidePanel>
 
     <ReviewModal
+      ref="reviewModalRef"
       :visible="showReviewModal"
       :pending-markers="pendingMarkers"
       :pending-count="pendingCount"
@@ -179,6 +180,7 @@ const pendingMarkers = ref([])
 const pendingCount = ref(0)
 const showReviewModal = ref(false)
 const reviewLoading = ref(false)
+const reviewModalRef = ref(null)
 const showCategoryManager = ref(false)
 
 async function refreshCategories() {
@@ -211,6 +213,8 @@ async function onApprove(id) {
     await recent.fetchRecentMarkers()
   } catch (e) {
     alert(e.response?.data?.detail || '审核失败')
+  } finally {
+    reviewModalRef.value?.resetReview()
   }
 }
 
@@ -223,6 +227,8 @@ async function onReject(id) {
     pendingCount.value = Math.max(0, pendingCount.value - 1)
   } catch (e) {
     alert(e.response?.data?.detail || '审核失败')
+  } finally {
+    reviewModalRef.value?.resetReview()
   }
 }
 
@@ -433,7 +439,7 @@ function closeReviewModal() {
 .recent-markers li:hover { background: rgba(200,164,78,0.06); }
 .recent-markers li + li { border-top: 1px solid rgba(42,40,64,0.5); }
 .recent-name { color: var(--text-primary); }
-.recent-region { color: var(--text-muted); font-size: 11px; }
+.recent-meta { color: var(--text-muted); font-size: 11px; }
 .empty-text { font-size: 13px; color: var(--text-muted); margin-top: 2px; height: 110px; }
 
 .pagination { margin-top: 4px; }

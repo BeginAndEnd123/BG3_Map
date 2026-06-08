@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/upload", tags=["上传"])
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "static" / "screenshots"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"}
 MAX_SIZE = 5 * 1024 * 1024
 
 # 文件头魔数签名映射：前 N 字节 -> 期望 Content-Type 前缀
@@ -31,6 +31,8 @@ MAGIC_SIGNATURES = {
 def _validate_magic(content: bytes, claimed_type: str) -> bool:
     if claimed_type == "image/webp":
         return content[:4] == b"RIFF" and content[8:12] == b"WEBP"
+    if claimed_type == "image/svg+xml":
+        return content[:5] == b"<?xml" or content[:4] == b"<svg" or content[:10] == b"<svg xmlns"
     for magic, mime_type in MAGIC_SIGNATURES.items():
         if content.startswith(magic):
             return mime_type == claimed_type

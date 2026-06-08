@@ -46,7 +46,8 @@ def delete_category(
     cat = db.query(Category).filter(Category.id == category_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="分类不存在")
-    if len(cat.markers) > 0:
+    marker_count = db.query(Marker).filter(Marker.category_id == category_id).limit(1).count()
+    if marker_count > 0:
         raise HTTPException(status_code=400, detail="该分类下存在标记，无法删除")
     db.delete(cat)
     db.commit()

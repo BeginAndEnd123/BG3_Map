@@ -43,12 +43,13 @@ class RateLimiter:
             if self._hits % 1000 == 0:
                 self._full_clean(now)
 
-            is_new = key not in self._store
-            if is_new:
-                if len(self._store) >= self.max_store_size:
-                    self._full_clean(now)
-                if len(self._store) >= self.max_store_size:
-                    return False
+        is_new = key not in self._store
+        if is_new:
+            if len(self._store) >= self.max_store_size:
+                self._full_clean(now)
+            if len(self._store) >= self.max_store_size:
+                oldest = min(self._store.keys(), key=lambda k: self._store[k][-1] if self._store[k] else 0)
+                del self._store[oldest]
                 self._store[key] = []
 
             self._clean(key, now)

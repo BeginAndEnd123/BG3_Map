@@ -99,12 +99,14 @@ function updateMarkers() {
     const cat = props.categories.find((c) => c.id === m.category_id)
     const iconUrl = cat?.icon || m.category?.icon
     const isPending = m.status === 'pending'
+    const fallbackColors = ['#3388ff', '#e06060', '#60c060', '#e8a838', '#c060e0', '#60c0c0']
+    const fallbackColor = fallbackColors[m.id % fallbackColors.length]
     const icon = iconUrl
       ? L.icon({ iconUrl, iconSize: [24, 24], iconAnchor: [12, 12], className: isPending ? 'marker-pending' : '' })
       : L.divIcon({
           html: `<div style="
             width: 12px; height: 12px; border-radius: 50%;
-            background: #3388ff; border: 2px solid ${isPending ? '#e8a838' : '#fff'};
+            background: ${fallbackColor}; border: 2px solid ${isPending ? '#e8a838' : '#fff'};
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
           "></div>`,
           iconSize: [12, 12],

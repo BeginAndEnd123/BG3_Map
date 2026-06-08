@@ -25,10 +25,7 @@ def list_markers(
     offset: Optional[int] = Query(None, ge=0),
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
-    if status is not None and status != 'approved' and not current_user.is_admin:
-        status = 'approved'
     return MarkerService.list_markers(
         db, region_id, category_id, keyword, map_name, sort_by, limit, offset, status,
     )
