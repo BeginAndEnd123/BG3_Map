@@ -1,5 +1,5 @@
 <template>
-  <div id="map-container" ref="container"></div>
+  <div id="map-container" ref="container" role="application" aria-label="交互式地图" tabindex="0"></div>
 </template>
 
 <script setup>
@@ -161,7 +161,7 @@ onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }
 })
 
-/** 平滑飞行到指定坐标 */
+/** 平滑飞行到指定坐标 (使用 props.maxZoom 而非 map.getMaxZoom) */
 function flyTo(lat, lng, zoom) {
   if (!map) return
   const targetZoom = zoom != null ? zoom : Math.max(1, props.maxZoom - 1)

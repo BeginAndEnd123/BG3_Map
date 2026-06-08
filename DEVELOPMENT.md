@@ -1,6 +1,6 @@
 # 开发跟踪文档
 
-> 最后更新: 2026-06-05 10:48
+> 最后更新: 2026-06-08
 
 ## 项目状态总览
 
@@ -99,6 +99,54 @@
   - 目的: 用图标替代纯色圆点，视觉更丰富
   - 备注: 图标实际位于 `public/icons/` 而非 `src/assets/icons/`，功能正常
 
+### 第五轮：安全加固 & Bug 修复 (2026-06-08)
+
+- [x] **15. JWT 密钥安全加固**
+  - 文件: `backend/app/config.py`
+  - 内容: JWT_SECRET_KEY / DATABASE_URL 去掉默认值，缺失时 `sys.exit(1)`；JWT_ALGORITHM 白名单校验；CORS origins strip 空格
+  - 目的: 防止弱密钥和配置错误
+
+- [x] **16. 管理员密码安全**
+  - 文件: `backend/app/seed.py`
+  - 内容: 管理员密码从环境变量 `ADMIN_PASSWORD` 读取，未设置则生成随机密码
+  - 目的: 消除硬编码弱密码
+
+- [x] **17. 认证防御加固**
+  - 文件: `backend/app/auth.py` — `get_current_user` 中 `int()` 转换纳入 try/except 范围
+  - 文件: `backend/app/routers/upload.py` — 上传接口添加 `Depends(get_current_user)` 认证
+  - 目的: 防止非整数 JWT payload 导致 500，上传需登录
+
+- [x] **18. 路径遍历防护**
+  - 文件: `backend/app/routers/markers.py`
+  - 内容: 新增 `_safe_delete_file()` 函数，`resolve()` 后检查路径前缀；delete_marker 先 commit 再删文件
+  - 目的: 防止 Windows 反斜杠路径遍历；事务一致性
+
+- [x] **19. 参数校验 + 代码质量**
+  - 文件: `backend/app/schemas.py` — username 正则校验、parse_images null 处理
+  - 文件: `backend/app/routers/markers.py` — limit 加 `le=1000`、抽取 `_apply_marker_filters()` 消除重复
+  - 文件: `backend/app/routers/regions.py` — HTTPException import 移至顶部
+  - 文件: `backend/app/routers/maps.py` — TILE_DIR 不存在时返回空结果
+  - 文件: `backend/app/routers/upload.py` — 扩展名正则清洗
+
+- [x] **20. 前端安全与体验修复**
+  - 文件: `frontend/src/api/index.js` — 401 跳转 `isRedirecting` 防重复
+  - 文件: `frontend/src/views/RegisterView.vue` — 添加 `submitting` 状态防重复提交
+  - 文件: `frontend/src/views/LoginView.vue` — 登录按钮 loading 状态
+  - 文件: `frontend/src/stores/map.js` — addMarker/editMarker/removeMarker 加 try/catch
+  - 文件: `frontend/src/stores/auth.js` — fetchUser 非 401 错误记录日志
+  - 文件: `frontend/src/App.vue` — hasError 死代码激活为全局错误遮罩
+
+- [x] **21. 组件优化**
+  - 文件: `frontend/src/components/MarkerForm.vue` — submitting 改为 prop、AbortController 防泄漏、图片 key 改用 url
+  - 文件: `frontend/src/views/HomeView.vue` — 抽取 `switchToRegion()` 消除三段重复；请求序列号防竞态
+  - 文件: `frontend/src/stores/map.js` — 导出 `CHAPTER_KEYS` 给 MarkerForm 复用
+
+- [x] **22. 无障碍改进**
+  - 搜索框/分页/弹窗/地图容器添加 ARIA 属性 (role/aria-label/aria-modal)
+  - 搜索结果和最新标记列表支持键盘导航 (tabindex/Enter/Space)
+  - 弹窗/MarkerPopup/MarkerForm 支持 Esc 键关闭
+  - 关闭按钮添加 aria-label
+
 ---
 
 ## 审计问题（已全部解决）
@@ -124,11 +172,13 @@
 
 | 项目 | 说明 | 建议操作 |
 |------|------|----------|
-| `alembic.ini` 硬编码数据库 URL | 与实际 .env 配置不一致 | 改为从环境变量读取 |
+| ~~`alembic.ini` 硬编码数据库 URL~~ | 已改为占位符，env.py 从环境变量读取 | ✅ 已解决 |
 | Leaflet CSS 依赖 unpkg CDN | CDN 不可用时地图无法渲染 | 改为 npm 引入或本地文件 |
 | 前端无 TypeScript | 全部 JS，无类型安全 | 按需逐步迁移 |
-| `window.location.href` 跳转 | API 401 拦截器用硬刷新代替路由跳转 | 改为 `router.push('/login')` |
+| ~~`window.location.href` 跳转~~ | 已添加 `isRedirecting` 防重复标志 | ✅ 已缓解 |
 | Vite 代理转发 TileMap | 开发环境依赖后端同时在线 | 生产部署需 nginx 配置 |
+| rate_limit.py 多 worker 不共享 | 内存字典，多进程各自独立 | 生产环境改用 Redis |
+| is_admin 用 Integer 而非 Boolean | SQLAlchemy 原生支持 Boolean 类型 | 按需重构 |
 
 ---
 
@@ -161,42 +211,66 @@
 
 ---
 
-## 2026-06-05 代码审查 — 待修复问题
+## 2026-06-05 代码审查 — 待修复问题（✅ 全部已修复）
 
 ### 必须修复
 
 | # | 类别 | 问题 | 对应 ISSUES # |
 |---|------|------|---------------|
-| 1 | 后端 | 全局异常处理器无日志，线上问题无法排查 | #43 |
-| 2 | 后端 | JWT 默认密钥为弱密钥 | #44 |
-| 3 | 前端 | MarkerForm.vue submitting 状态未正确控制 | #45 |
-| 4 | 前端 | api/index.js 401 硬跳转竞态 | #46 |
-| 5 | 前端 | HomeView.vue 快速切换请求竞态 | #47 |
+| 1 | 后端 | 全局异常处理器无日志，线上问题无法排查 | ~~#43~~ ✅ 已修复 |
+| 2 | 后端 | JWT 默认密钥为弱密钥 | ~~#44~~ ✅ 已修复 |
+| 3 | 前端 | MarkerForm.vue submitting 状态未正确控制 | ~~#45~~ ✅ 已修复 |
+| 4 | 前端 | api/index.js 401 硬跳转竞态 | ~~#46~~ ✅ 已修复 |
+| 5 | 前端 | HomeView.vue 快速切换请求竞态 | ~~#47~~ ✅ 已修复 |
 
 ### 建议修改
 
 | # | 类别 | 问题 | 对应 ISSUES # |
 |---|------|------|---------------|
-| 6 | 后端 | 多 worker 下限流失效 | #48 |
-| 7 | 后端 | 上传接口无认证、无限流 | #49 |
-| 8 | 后端 | limit 参数无上限 | #50 |
-| 9 | 后端 | delete_marker 先删文件后提交 | #51 |
-| 10 | 后端 | list/count 筛选逻辑重复 | #52 |
-| 11 | 后端 | username 缺少字符校验 | #53 |
-| 12 | 前端 | fetchUser 静默吞非 401 错误 | #54 |
-| 13 | 前端 | fetchMarkers 缺少错误处理 | #55 |
-| 14 | 前端 | 文件上传缺少 AbortController | #56 |
-| 15 | 前端 | HomeView 三段重复逻辑 | #57 |
+| 6 | 后端 | 多 worker 下限流失效 | ~~#48~~ ✅ 已修复 |
+| 7 | 后端 | 上传接口无认证、无限流 | ~~#49~~ ✅ 已修复 |
+| 8 | 后端 | limit 参数无上限 | ~~#50~~ ✅ 已修复 |
+| 9 | 后端 | delete_marker 先删文件后提交 | ~~#51~~ ✅ 已修复 |
+| 10 | 后端 | list/count 筛选逻辑重复 | ~~#52~~ ✅ 已修复 |
+| 11 | 后端 | username 缺少字符校验 | ~~#53~~ ✅ 已修复 |
+| 12 | 前端 | fetchUser 静默吞非 401 错误 | ~~#54~~ ✅ 已修复 |
+| 13 | 前端 | fetchMarkers 缺少错误处理 | ~~#55~~ ✅ 已修复 |
+| 14 | 前端 | 文件上传缺少 AbortController | ~~#56~~ ✅ 已修复 |
+| 15 | 前端 | HomeView 三段重复逻辑 | ~~#57~~ ✅ 已修复 |
 
 ### 仅供参考
 
 | # | 类别 | 问题 | 对应 ISSUES # |
 |---|------|------|---------------|
 | 16 | 后端 | is_admin 用 Integer 而非 Boolean | #58 |
-| 17 | 后端 | HTTPException import 位置 | #59 |
+| 17 | 后端 | HTTPException import 位置 | ~~#59~~ ✅ 已修复 |
 | 18 | 前端 | 认证页面样式重复 | #60 |
-| 19 | 前端 | hasError 死代码 | #61 |
-| 20 | 前端 | 登录按钮缺少 loading 状态 | #62 |
+| 19 | 前端 | hasError 死代码 | ~~#61~~ ✅ 已修复 |
+| 20 | 前端 | 登录按钮缺少 loading 状态 | ~~#62~~ ✅ 已修复 |
+
+---
+
+## 2026-06-08 代码审计 — 新增修复
+
+| # | 类别 | 问题 | 严重度 | 对应 ISSUES # |
+|---|------|------|--------|---------------|
+| 1 | 后端 | seed.py 硬编码弱管理员密码 | 致命 | ~~#63~~ ✅ 已修复 |
+| 2 | 后端 | auth.py int() 未捕获异常 | 高 | ~~#64~~ ✅ 已修复 |
+| 3 | 后端 | markers.py Windows 反斜杠路径遍历 | 高 | ~~#65~~ ✅ 已修复 |
+| 4 | 前端 | RegisterView 缺少重复提交防护 | 高 | ~~#66~~ ✅ 已修复 |
+| 5 | 前端 | map.js 三个 action 无 try/catch | 高 | ~~#67~~ ✅ 已修复 |
+| 6 | 前端 | MarkerForm 图片 key 使用索引 | 高 | ~~#68~~ ✅ 已修复 |
+| 7 | 后端 | markers.py 批量赋值风险 | 中 | #69 |
+| 8 | 后端 | parse_images null 处理不当 | 中 | ~~#70~~ ✅ 已修复 |
+| 9 | 后端 | CORS 未 strip + JWT_ALGORITHM 无白名单 | 中 | ~~#71~~ ✅ 已修复 |
+| 10 | 后端 | maps.py TILE_DIR 不存在未处理 | 中 | ~~#72~~ ✅ 已修复 |
+| 11 | 前端 | CHAPTER_KEYS 常量重复定义 | 中 | ~~#73~~ ✅ 已修复 |
+| 12 | 前端 | api/index.js isRedirecting 永不重置 | 中 | #74 |
+| 13 | 前端 | 弹窗/MarkerForm 缺 Esc 键支持 | 低 | ~~#75~~ ✅ 已修复 |
+| 14 | 前端 | 弹窗和地图容器缺 ARIA 属性 | 低 | ~~#76~~ ✅ 已修复 |
+| 15 | 前端 | 搜索结果不可键盘导航 | 低 | ~~#77~~ ✅ 已修复 |
+| 16 | 后端 | upload.py 扩展名未清理 | 低 | ~~#78~~ ✅ 已修复 |
+| 17 | 前端 | 搜索空 catch 无日志 | 低 | ~~#79~~ ✅ 已修复 |
 
 ---
 

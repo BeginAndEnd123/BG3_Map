@@ -5,8 +5,11 @@
 """
 
 import uuid
+import re
 from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/upload", tags=["上传"])
 
@@ -35,8 +38,11 @@ def _validate_magic(content: bytes, claimed_type: str) -> bool:
 
 
 @router.post("")
-async def upload_file(file: UploadFile = File(...)):
-    """上传截图文件，返回可访问的静态 URL"""
+async def upload_file(
+    file: UploadFile = File(...),
+    _=Depends(get_current_user),
+):
+    """上传截图文件，返回可访问的静态 URL (需登录)"""
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="仅支持 JPG/PNG/GIF/WebP 格式")
 
@@ -49,7 +55,9 @@ async def upload_file(file: UploadFile = File(...)):
 
     ext = "png"
     if file.filename and "." in file.filename:
-        ext = file.filename.rsplit(".", 1)[-1].lower()
+        raw_ext = file.filename.rsplit(".", 1)[-1].lower()
+        if re.match(r'^[a-z0-9]+$', raw_ext) and len(raw_ext) <= 5:
+            ext = raw_ext
     filename = f"{uuid.uuid4().hex}.{ext}"
     filepath = UPLOAD_DIR / filename
 

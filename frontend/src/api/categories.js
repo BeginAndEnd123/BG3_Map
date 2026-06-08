@@ -1,4 +1,0 @@
-/** 分类 API */
-import api from './index'
-
-export const getCategories = () => api.get('/categories')

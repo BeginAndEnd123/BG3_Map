@@ -41,7 +41,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location 'G:\
 | Swagger 文档 | http://127.0.0.1:8000/docs |
 | 前端页面 | http://localhost:5173 |
 
-默认管理员: `admin` / `admin123`
+默认管理员账号: `admin`，密码从环境变量 `ADMIN_PASSWORD` 读取或自动生成随机密码（运行 `python -m app.seed` 时输出）
 
 前端 Vite 配置了代理：`/api`、`/TileMap`、`/static` 自动转发到后端 8000 端口。
 
@@ -142,18 +142,23 @@ G:\BG3_map/
 
 ### 后端
 - **权限模型**: User 表用 `is_admin` (Integer, 0/1) 区分角色，`require_admin` 依赖注入保护 CUD 端点
-- **认证流**: JWT token 存储在 localStorage，登录时返回；`get_current_user` 从 Authorization header 解码
+- **认证流**: JWT token 存储在 localStorage，登录时返回；`get_current_user` 从 Authorization header 解码，捕获 JWTError/ValueError/TypeError
+- **配置安全**: JWT_SECRET_KEY / DATABASE_URL 无默认值，缺失启动报错；JWT_ALGORITHM 白名单校验；CORS origins 自动 strip 空格
 - **API 前缀**: 所有 API 路由带 `/api` 前缀
-- **数据填充**: `python -m app.seed` 每次运行会检查是否存在再插入（覆盖模式），安全可重复执行
-- **Alembic**: 只有一个初始迁移版本 `15a5faf78b3d_initial.py`，`alembic.ini` 中硬编码了数据库 URL（与 .env 可能不一致）
+- **数据填充**: `python -m app.seed` 管理员密码从环境变量 `ADMIN_PASSWORD` 读取，未设置生成随机密码
+- **文件安全**: `_safe_delete_file()` resolve 后校验路径前缀防遍历；delete_marker 先 commit 再删文件
+- **Alembic**: 只有一个初始迁移版本 `15a5faf78b3d_initial.py`，env.py 从环境变量读取 DB URL
 
 ### 前端
-- **路由守卫**: 白名单 `['login', 'register']`，已登录用户访问登录页自动跳转首页
+- **路由守卫**: 白名单 `['login', 'register', 'not-found']`，已登录用户访问登录页自动跳转首页
 - **登录态恢复**: `App.vue` onMounted 调用 `authStore.fetchUser()` 用 localStorage token 验证
-- **401 处理**: axios 拦截器 401 时用 `window.location.href = '/login'` 硬刷新（非 router.push）
+- **401 处理**: axios 拦截器 `isRedirecting` 防重复标志，防止并发 401 多次跳转
+- **表单防护**: LoginView / RegisterView 均有 `submitting` 状态防重复提交
+- **全局错误**: App.vue 中 `onErrorCaptured` + hasError 遮罩 UI
 - **Leaflet**: CSS 从 unpkg CDN 加载，地图用 CRS.Simple 非地理坐标系统
 - **图标渲染**: MapContainer 优先 `L.icon` 加载 SVG 图标，无图标时回退 `L.divIcon` 纯色圆点
 - **分类图标路径**: `public/icons/` (waypoint.svg, monster.svg, item.svg)，seed.py 中预设了 `/icons/xxx.svg` 路径
+- **无障碍**: 搜索/弹窗/列表支持 ARIA 属性和键盘导航 (Esc/Enter/Space)
 
 ### 数据库
 - 连接字符串: `mysql+pymysql://root:root@localhost:3306/bg3_map`
@@ -167,25 +172,26 @@ G:\BG3_map/
 
 ## 当前开发状态
 
-DEVELOPMENT.md 中 **14 个任务全部已完成**：
+DEVELOPMENT.md 中 **22 个任务全部已完成**：
 
 | 轮次 | 任务 | 状态 |
 |------|------|------|
-| 第一轮 | 1. TileMap 静态挂载, 2. 路由鉴权, 3. 登录态恢复, 4. favicon | ✅ |
-| 第二轮 | 5. MapContainer, 6. MarkerPopup, 7. SidePanel 组件重构 | ✅ |
-| 第三轮 | 8. 管理员权限, 9. CRUD 前端, 10. 登出+用户信息, 11. 加载状态 | ✅ |
-| 第四轮 | 12. Alembic 迁移, 13. 404 页面, 14. 分类图标 | ✅ |
+| 第一轮 | 1-4: TileMap 挂载, 路由鉴权, 登录态恢复, favicon | ✅ |
+| 第二轮 | 5-7: MapContainer, MarkerPopup, SidePanel 组件重构 | ✅ |
+| 第三轮 | 8-11: 管理员权限, CRUD 前端, 登出, 加载状态 | ✅ |
+| 第四轮 | 12-14: Alembic 迁移, 404 页面, 分类图标 | ✅ |
+| 第五轮 | 15-22: 安全加固, Bug修复, 组件优化, 无障碍 | ✅ |
 
-项目处于 **功能完整、可正常运行** 状态。
+项目处于 **功能完整、安全强化、可正常运行** 状态。
 
 ## 技术债务
 
 | 问题 | 严重度 | 说明 |
 |------|--------|------|
-| `alembic.ini` 硬编码 DB URL | 中 | 与 .env 不一致，需改为从环境变量读取 |
 | Leaflet CSS CDN 依赖 | 中 | CDN 不可用时地图无法渲染 |
+| rate_limit.py 内存限流 | 中 | 多 worker 时各进程独立，生产需 Redis |
 | 无 TypeScript | 低 | 全部 JS，按需逐步迁移 |
-| 401 用 window.location.href | 低 | 应改为 `router.push('/login')` |
+| is_admin 用 Integer | 低 | SQLAlchemy 原生支持 Boolean 类型 |
 | Vite 代理依赖后端 | 低 | 生产环境需 nginx |
 
 ## 常见操作

@@ -5,12 +5,11 @@
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getRegions } from '../api/regions'
-import { getCategories } from '../api/categories'
+import api from '../api/index'
 import { getMarkers, createMarker, updateMarker, deleteMarker } from '../api/markers'
 
 // 章节索引到目录名的映射，按 sort_order 顺序
-const CHAPTER_KEYS = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
+export const CHAPTER_KEYS = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
 
 export const useMapStore = defineStore('map', () => {
   const regions = ref([])              // 区域列表
@@ -22,7 +21,7 @@ export const useMapStore = defineStore('map', () => {
 
   async function fetchRegions() {
     try {
-      const res = await getRegions()
+      const res = await api.get('/regions')
       regions.value = res.data
       if (!currentRegion.value && regions.value.length > 0) {
         currentRegion.value = regions.value[0]
@@ -34,7 +33,7 @@ export const useMapStore = defineStore('map', () => {
 
   async function fetchCategories() {
     try {
-      const res = await getCategories()
+      const res = await api.get('/categories')
       categories.value = res.data
     } catch (e) {
       console.error('获取分类列表失败:', e)
@@ -42,26 +41,46 @@ export const useMapStore = defineStore('map', () => {
   }
 
   async function fetchMarkers(params = {}) {
-    const res = await getMarkers(params)
-    markers.value = res.data
+    try {
+      const res = await getMarkers(params)
+      markers.value = res.data
+    } catch (e) {
+      console.error('获取标记列表失败:', e)
+      markers.value = []
+    }
   }
 
   async function addMarker(data) {
-    const res = await createMarker(data)
-    markers.value.push(res.data)
-    return res.data
+    try {
+      const res = await createMarker(data)
+      markers.value.push(res.data)
+      return res.data
+    } catch (e) {
+      console.error('新增标记失败:', e)
+      throw e
+    }
   }
 
   async function editMarker(id, data) {
-    const res = await updateMarker(id, data)
-    const idx = markers.value.findIndex(m => m.id === id)
-    if (idx !== -1) markers.value[idx] = res.data
-    return res.data
+    try {
+      const res = await updateMarker(id, data)
+      const idx = markers.value.findIndex(m => m.id === id)
+      if (idx !== -1) markers.value[idx] = res.data
+      return res.data
+    } catch (e) {
+      console.error('编辑标记失败:', e)
+      throw e
+    }
   }
 
   async function removeMarker(id) {
-    await deleteMarker(id)
-    markers.value = markers.value.filter(m => m.id !== id)
+    try {
+      await deleteMarker(id)
+      markers.value = markers.value.filter(m => m.id !== id)
+    } catch (e) {
+      console.error('删除标记失败:', e)
+      throw e
+    }
   }
 
   function setRegion(region) {

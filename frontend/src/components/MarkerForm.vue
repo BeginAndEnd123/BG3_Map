@@ -1,6 +1,6 @@
 <template>
-  <div class="form-overlay" @click.self="$emit('close')">
-    <div class="form-card">
+  <div class="form-overlay" @click.self="$emit('close')" @keydown.escape="$emit('close')">
+    <div class="form-card" role="dialog" aria-modal="true" :aria-label="isEdit ? '编辑标记' : '新增标记'">
       <h3>{{ isEdit ? '编辑标记' : '新增标记' }}</h3>
       <form @submit.prevent="onSubmit">
         <label>
@@ -27,7 +27,7 @@
           <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" @change="onFileSelect" />
           <div v-if="uploading" class="upload-status">上传中... ({{ uploadProgress }})</div>
           <div v-if="form.images.length > 0" class="image-grid">
-            <div v-for="(url, i) in form.images" :key="i" class="image-item">
+            <div v-for="url in form.images" :key="url" class="image-item">
               <img :src="url" class="upload-preview" />
               <button type="button" class="img-remove" @click="removeImage(i)">&times;</button>
             </div>
@@ -63,8 +63,8 @@
         <p v-if="error" class="form-error">{{ error }}</p>
         <div class="form-actions">
           <button type="button" class="btn-cancel" @click="$emit('close')">取消</button>
-          <button type="submit" class="btn-submit" :disabled="submitting">
-            {{ submitting ? '提交中...' : (isEdit ? '保存' : '创建') }}
+          <button type="submit" class="btn-submit" :disabled="props.submitting">
+            {{ props.submitting ? '提交中...' : (isEdit ? '保存' : '创建') }}
           </button>
         </div>
       </form>
@@ -82,9 +82,9 @@
  * - 配置传送目标（选择目标区域和地图，输入坐标）
  * - 编辑模式下预填充已有数据
  */
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
 import api from '../api/index'
-import { getMaps } from '../api/maps'
+import { CHAPTER_KEYS } from '../stores/map'
 
 const props = defineProps({
   marker: { type: Object, default: null },           // 编辑时传入的标记对象
@@ -92,19 +92,19 @@ const props = defineProps({
   regions: { type: Array, default: () => [] },
   regionId: { type: Number, default: null },          // 当前区域 ID
   initialCoords: { type: Object, default: null },     // 拾取模式选择的坐标
+  submitting: { type: Boolean, default: false },      // 父组件控制提交状态
 })
 
 const emit = defineEmits(['close', 'submit'])
 
 const isEdit = !!props.marker                           // 是否为编辑模式
-const submitting = ref(false)
 const error = ref('')
 const uploading = ref(false)
 const uploadProgress = ref('')
 const uploadError = ref('')
 const targetMaps = ref([])                              // 目标区域下的子地图列表
 const hasTarget = ref(false)                            // 是否启用传送目标配置
-const chapterKeys = ['chapter0', 'chapter1', 'chapter2', 'chapter3', 'chapter4']
+let uploadAbortController = null
 
 const form = reactive({
   name: '',
@@ -166,14 +166,19 @@ async function onFileSelect(e) {
     }
     uploading.value = true
     uploadProgress.value = `${i + 1}/${files.length}`
+    if (uploadAbortController) uploadAbortController.abort()
+    uploadAbortController = new AbortController()
     const fd = new FormData()
     fd.append('file', files[i])
     try {
-      const res = await api.post('/upload', fd)
+      const res = await api.post('/upload', fd, { signal: uploadAbortController.signal })
       form.images.push(res.data.url)
     } catch (err) {
-      uploadError.value = `${files[i].name} 上传失败`
+      if (err.name !== 'CanceledError') {
+        uploadError.value = `${files[i].name} 上传失败`
+      }
     }
+    uploadAbortController = null
   }
   uploading.value = false
   uploadProgress.value = ''
@@ -184,10 +189,10 @@ async function fetchTargetMaps() {
   if (!form.target_region_id) return
   const region = props.regions.find(r => r.id === form.target_region_id)
   if (!region) return
-  const chapterKey = chapterKeys[region.sort_order] || ''
+  const chapterKey = CHAPTER_KEYS[region.sort_order] || ''
   if (!chapterKey) return
   try {
-    const res = await getMaps({ chapter: chapterKey })
+    const res = await api.get('/maps', { params: { chapter: chapterKey } })
     targetMaps.value = res.data
   } catch {
     targetMaps.value = []
@@ -206,6 +211,13 @@ function removeImage(index) {
   /** 从 images 列表中移除指定索引的图片 */
   form.images.splice(index, 1)
 }
+
+onBeforeUnmount(() => {
+  if (uploadAbortController) {
+    uploadAbortController.abort()
+    uploadAbortController = null
+  }
+})
 
 async function onSubmit() {
   /** 提交表单，触发父组件处理创建或更新逻辑 */

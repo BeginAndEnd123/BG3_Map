@@ -2,7 +2,7 @@
 区域路由 — 按 sort_order 排序返回所有游戏区域
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Region
@@ -23,6 +23,5 @@ def get_region(region_id: int, db: Session = Depends(get_db)):
     """根据 ID 获取单个区域详情"""
     region = db.query(Region).filter(Region.id == region_id).first()
     if not region:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="区域不存在")
     return RegionResponse.model_validate(region)

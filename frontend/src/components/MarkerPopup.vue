@@ -1,7 +1,7 @@
 <template>
-  <div class="marker-overlay" v-if="marker" @click.self="$emit('close')">
-    <div class="marker-card">
-      <button class="close-btn" @click="$emit('close')">&times;</button>
+  <div class="marker-overlay" v-if="marker" @click.self="$emit('close')" @keydown.escape="$emit('close')">
+    <div class="marker-card" role="dialog" aria-modal="true" :aria-label="marker.name">
+      <button class="close-btn" @click="$emit('close')" aria-label="关闭">&times;</button>
       <h3>{{ marker.name }}</h3>
       <span class="category-tag" :style="{ background: categoryColor }">
         {{ categoryName }}
@@ -9,7 +9,7 @@
       <p v-if="marker.description" class="desc">{{ marker.description }}</p>
       <p class="coords">坐标: ({{ marker.x_coord }}, {{ marker.y_coord }})</p>
       <div v-if="images.length > 0" class="image-gallery">
-        <img v-for="(url, i) in images" :key="i" :src="url" alt="截图" class="screenshot" @click="enlarged = enlarged === i ? null : i" />
+        <img v-for="(url, i) in images" :key="i" :src="url" :alt="marker.name + ' 截图'" class="screenshot" @click="enlarged = enlarged === i ? null : i" />
         <div v-if="enlarged !== null" class="enlarged-overlay" @click="enlarged = null">
           <img :src="images[enlarged]" class="enlarged-img" />
         </div>

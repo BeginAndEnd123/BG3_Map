@@ -28,6 +28,9 @@ def list_maps(chapter: str = ""):
     若指定 chapter 参数则只返回该章节的地图；否则返回全部章节分组。
     通过扫描瓦片目录自动计算每个子地图的最大 zoom 级别。
     """
+    if not TILE_DIR.is_dir():
+        return {} if not chapter else []
+
     if chapter:
         chapter = os.path.basename(chapter)
         if chapter not in CHAPTER_MAP:

@@ -5,35 +5,38 @@
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { login as apiLogin, register as apiRegister, getMe } from '../api/auth'
+import api from '../api/index'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)                                     // 当前用户信息
-  const token = ref(localStorage.getItem('token') || '')     // JWT 令牌
+  const user = ref(null)
+  const token = ref(localStorage.getItem('token') || '')
 
   async function login(username, password) {
-    const res = await apiLogin({ username, password })
+    const res = await api.post('/auth/login', { username, password })
     token.value = res.data.access_token
     user.value = res.data.user
     localStorage.setItem('token', token.value)
   }
 
   async function register(username, password, confirmPassword) {
-    const res = await apiRegister({ username, password, confirm_password: confirmPassword })
+    const res = await api.post('/auth/register', {
+      username, password, confirm_password: confirmPassword,
+    })
     token.value = res.data.access_token
     user.value = res.data.user
     localStorage.setItem('token', token.value)
   }
 
   async function fetchUser() {
-    /** 尝试用本地 token 恢复登录态，仅 401 时登出 */
     if (!token.value) return
     try {
-      const res = await getMe()
+      const res = await api.get('/auth/me')
       user.value = res.data
     } catch (e) {
       if (e.response?.status === 401) {
         logout()
+      } else {
+        console.warn('fetchUser 非 401 错误:', e.response?.status, e.message)
       }
     }
   }

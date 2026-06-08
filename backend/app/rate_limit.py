@@ -2,22 +2,24 @@
 请求频率限制模块
 
 基于内存字典的简单速率限制器，用于防止暴力破解和滥用。
-每分钟最多允许 max_requests 次请求。
+每分钟最多允许 max_requests 次请求，字典最多保留 max_store_size 个 key。
 """
 
 import time
-from collections import defaultdict
 from fastapi import Request, HTTPException, status
 
 
 class RateLimiter:
-    def __init__(self, max_requests: int = 5, window_seconds: int = 60):
+    def __init__(self, max_requests: int = 5, window_seconds: int = 60, max_store_size: int = 10000):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        self._store: dict[str, list[float]] = defaultdict(list)
+        self.max_store_size = max_store_size
+        self._store: dict[str, list[float]] = {}
         self._hits = 0
 
     def _clean(self, key: str, now: float) -> None:
+        if key not in self._store:
+            return
         cutoff = now - self.window_seconds
         self._store[key] = [t for t in self._store[key] if t > cutoff]
         if not self._store[key]:
@@ -31,10 +33,21 @@ class RateLimiter:
 
     def is_allowed(self, key: str) -> bool:
         now = time.time()
-        self._clean(key, now)
         self._hits += 1
         if self._hits % 1000 == 0:
             self._full_clean(now)
+
+        is_new = key not in self._store
+        if is_new:
+            if len(self._store) >= self.max_store_size:
+                self._full_clean(now)
+            if len(self._store) >= self.max_store_size:
+                return False
+            self._store[key] = []
+
+        self._clean(key, now)
+        if not self._store.get(key):
+            self._store[key] = []
         if len(self._store[key]) >= self.max_requests:
             return False
         self._store[key].append(now)

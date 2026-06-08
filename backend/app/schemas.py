@@ -5,6 +5,7 @@ Pydantic 数据校验与序列化 Schema
 """
 
 import json
+import re
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator
@@ -24,6 +25,8 @@ class UserRegister(BaseModel):
             raise ValueError("用户名至少需要2个字符")
         if len(v) > 50:
             raise ValueError("用户名不能超过50个字符")
+        if not re.match(r'^[\w\u4e00-\u9fff]+$', v):
+            raise ValueError("用户名只允许字母、数字、下划线和中文")
         return v
 
     @field_validator("password")
@@ -123,12 +126,15 @@ class MarkerUpdate(BaseModel):
 def parse_images(raw: Optional[str]) -> list[str]:
     """将数据库中存储的 JSON 字符串解析为图片 URL 列表
 
-    兼容两种格式：JSON 数组和纯字符串。
+    兼容两种格式：JSON 数组和纯字符串。处理 null 值返回空列表。
     """
     if not raw:
         return []
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
+        if result is None:
+            return []
+        return result
     except (json.JSONDecodeError, TypeError):
         return [raw]
 

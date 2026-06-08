@@ -90,6 +90,7 @@
 | username | VARCHAR(50) UNIQUE NOT NULL | 用户名 |
 | password_hash | VARCHAR(255) NOT NULL | 密码哈希 (bcrypt) |
 | avatar | VARCHAR(255) | 头像URL |
+| is_admin | INT DEFAULT 0 | 是否管理员 (0/1) |
 | created_at | DATETIME DEFAULT NOW() | 创建时间 |
 
 ### 区域表 `regions`
@@ -124,7 +125,12 @@
 | description | TEXT | 详细描述 |
 | x_coord | DECIMAL(10,2) NOT NULL | 地图X坐标 |
 | y_coord | DECIMAL(10,2) NOT NULL | 地图Y坐标 |
-| screenshot | VARCHAR(255) | 截图URL |
+| screenshot | TEXT | 截图 JSON 数组 |
+| map_name | VARCHAR(100) | 所属子地图名称 |
+| target_region_id | INT | 传送目标区域 ID |
+| target_map_name | VARCHAR(100) | 传送目标子地图名 |
+| target_x | DECIMAL(10,2) | 传送目标 X 坐标 |
+| target_y | DECIMAL(10,2) | 传送目标 Y 坐标 |
 | created_at | DATETIME DEFAULT NOW() | 创建时间 |
 
 ## API 接口设计
@@ -154,11 +160,24 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/markers` | 查询标记（支持 `region_id` `category_id` `keyword` 筛选） |
+| GET | `/api/markers` | 查询标记（支持 `region_id` `category_id`(逗号多选) `keyword` `map_name` 筛选，`limit`≤1000） |
+| GET | `/api/markers/count` | 统计满足条件的标记总数 |
 | GET | `/api/markers/{id}` | 获取标记详情 |
-| POST | `/api/markers` | 新增标记（需认证） |
-| PUT | `/api/markers/{id}` | 编辑标记（需认证） |
-| DELETE | `/api/markers/{id}` | 删除标记（需认证） |
+| POST | `/api/markers` | 新增标记（需管理员） |
+| PUT | `/api/markers/{id}` | 编辑标记（需管理员） |
+| DELETE | `/api/markers/{id}` | 删除标记（需管理员） |
+
+### 地图模块 `/api/maps`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/maps` | 获取子地图列表（支持 `chapter` 筛选） |
+
+### 上传模块 `/api/upload`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/upload` | 上传截图（需登录，JPG/PNG/GIF/WebP，≤5MB） |
 
 ## 项目结构
 
@@ -168,9 +187,10 @@
 BG3_map/
 ├── .gitattributes
 ├── .gitignore
-├── ISSUES.md                       # 问题清单
+├── ISSUES.md                       # 问题清单 (79项)
 ├── DEVELOPMENT.md                  # 开发跟踪文档
 ├── PRD.md                          # 产品需求文档
+├── 数据流程说明.md                   # 注册登录数据流详解
 ├── README.md
 ├── backend/
 │   ├── .env                        # 环境变量
@@ -352,7 +372,10 @@ pip install -r requirements.txt
 
 # 配置环境变量（编辑 .env）
 # DATABASE_URL=mysql+pymysql://root:123456@localhost:3306/bg3_map
-# JWT_SECRET_KEY=your-secret-key-change-in-production
+# JWT_SECRET_KEY=your-strong-random-key
+
+# 可选：设置管理员密码
+# set ADMIN_PASSWORD=your-admin-password
 
 # 填充初始数据（区域、分类、admin 账号）
 python -m app.seed
@@ -361,7 +384,7 @@ python -m app.seed
 uvicorn app.main:app --reload --port 8000
 ```
 
-默认管理员账号：`admin` / `admin123`
+管理员账号：`admin`，密码从环境变量 `ADMIN_PASSWORD` 读取，未设置则自动生成随机密码并输出到控制台。
 
 ### 3. 瓦片切图
 
