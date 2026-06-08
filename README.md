@@ -187,12 +187,12 @@
 BG3_map/
 ├── .gitattributes
 ├── .gitignore
-├── ISSUES.md                       # 问题清单 (79项)
 ├── README.md
 ├── docs/                           # 说明类文档
 │   ├── PRD.md                      # 产品需求文档
 │   ├── DEVELOPMENT.md              # 开发跟踪文档
 │   ├── PROJECT.md                  # 项目详解
+│   ├── ISSUES.md                   # 问题清单 (79项)
 │   └── 数据流程说明.md               # 注册数据流详解
 ├── backend/
 │   ├── .env                        # 环境变量

@@ -70,8 +70,8 @@ G:\BG3_map/
 │   ├── DEVELOPMENT.md               # 开发跟踪（22 个任务全部已完成）
 │   ├── PRD.md                       # 产品需求文档
 │   ├── PROJECT.md                   # 项目详解
+│   ├── ISSUES.md                    # 问题清单
 │   └── 数据流程说明.md               # 注册数据流详解
-│
 ├── backend/
 │   ├── .env                         # DATABASE_URL, JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
 │   ├── requirements.txt
