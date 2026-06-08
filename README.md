@@ -264,6 +264,7 @@ BG3_map/
 │       │   ├── usePickMode.js      # 坐标拾取模式
 │       │   └── useMarkerForm.js    # 标记表单提交/删除
 │       ├── components/
+│       │   ├── AuthForm.vue          # 登录/注册共享表单组件
 │       │   ├── MapContainer.vue     # 地图容器
 │       │   ├── MarkerPopup.vue      # 标记详情弹窗
 │       │   ├── MarkerForm.vue       # 标记新增/编辑表单
@@ -276,7 +277,6 @@ BG3_map/
 │       │   ├── LoginView.vue        # 登录页
 │       │   ├── RegisterView.vue     # 注册页
 │       │   ├── NotFoundView.vue     # 404 页面
-│       │   └── auth.css             # 登录/注册共享样式
 │       ├── stores/
 │       │   ├── auth.js              # 认证状态 (Pinia)
 │       │   └── map.js               # 地图状态 (Pinia)

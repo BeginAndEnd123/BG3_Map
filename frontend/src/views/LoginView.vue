@@ -1,25 +1,17 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2>登录</h2>
-      <form @submit.prevent="handleLogin">
-        <input type="text" v-model="username" placeholder="用户名" required />
-        <input type="password" v-model="password" placeholder="密码" required />
-        <button type="submit" :disabled="submitting">{{ submitting ? '登录中...' : '登录' }}</button>
-      </form>
-      <p class="auth-link">
-        没有账号？<router-link to="/register">注册</router-link>
-      </p>
-      <p v-if="error" class="error">{{ error }}</p>
-    </div>
-  </div>
+  <AuthForm title="登录" :submitting="submitting" :error="error"
+    link-text="没有账号？" link-label="注册" link-to="/register"
+    @submit="handleLogin">
+    <input type="text" v-model="username" placeholder="用户名" required />
+    <input type="password" v-model="password" placeholder="密码" required />
+  </AuthForm>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import './auth.css'
+import AuthForm from '../components/AuthForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
