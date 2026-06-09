@@ -5,7 +5,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import Category
+from ..models import Category, Marker
 from ..schemas import CategoryResponse, CategoryCreate, CategoryUpdate
 from ..auth import require_admin
 
