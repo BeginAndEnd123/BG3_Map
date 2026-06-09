@@ -94,10 +94,12 @@
       :pending-markers="pendingMarkers"
       :pending-count="pendingCount"
       :loading="reviewLoading"
+      :current-page="reviewPage"
       @close="closeReviewModal"
       @approve="onApprove"
       @reject="onReject"
       @locate="onLocatePending"
+      @page-change="onReviewPageChange"
     />
 
     <CategoryManager
@@ -111,7 +113,8 @@
       <MapContainer ref="mapRef" :tile-url="tileUrl" :max-zoom="mapMaxZoom"
         :markers="mapStore.markers" :categories="mapStore.categories"
         :pick-mode="pick.pickMode.value" :temp-marker="pick.tempMarker.value"
-        @marker-click="selectedMarker = $event"
+        :is-admin="isAdmin"
+        @marker-click="onMarkerClick"
         @marker-teleport="onMarkerTeleport"
         @map-pick="pick.onMapPick($event)" />
 
@@ -132,6 +135,8 @@
       :position="hoverPosition"
       @close="onPopupClose">
       <template #actions v-if="isAdmin">
+        <button v-if="selectedCategoryName === '传送点' && selectedMarker?.target_region_id"
+          class="action-btn teleport" @click="onTeleportFromPopup(selectedMarker)">传送</button>
         <button class="action-btn edit" @click="onEdit(selectedMarker)">编辑</button>
         <button class="action-btn delete" @click="onDelete(selectedMarker.id)">删除</button>
       </template>
@@ -199,6 +204,8 @@ const showReviewModal = ref(false)
 const reviewLoading = ref(false)
 const reviewModalRef = ref(null)
 const showCategoryManager = ref(false)
+const reviewPage = ref(1)
+const REVIEW_PAGE_SIZE = 10
 
 async function refreshCategories() {
   await mapStore.fetchCategories()
@@ -208,8 +215,9 @@ async function refreshCategories() {
 async function fetchPendingMarkers() {
   reviewLoading.value = true
   try {
+    const offset = (reviewPage.value - 1) * REVIEW_PAGE_SIZE
     const [listRes, countRes] = await Promise.all([
-      getMarkers({ status: 'pending', limit: 100 }),
+      getMarkers({ status: 'pending', limit: REVIEW_PAGE_SIZE, offset }),
       getPendingCount(),
     ])
     pendingMarkers.value = listRes.data
@@ -220,6 +228,11 @@ async function fetchPendingMarkers() {
   } finally {
     reviewLoading.value = false
   }
+}
+
+function onReviewPageChange(page) {
+  reviewPage.value = page
+  fetchPendingMarkers()
 }
 
 async function onApprove(id) {
@@ -289,7 +302,26 @@ async function onRecentHover(marker, event) {
   hoverPreviewMarker = marker
   selectedMarker.value = marker
   const rect = event.currentTarget.getBoundingClientRect()
-  hoverPosition.value = { left: rect.right + 12 + 'px', top: rect.top - 8 + 'px' }
+  const cardW = 380
+  let left = rect.right + 12
+  let top = rect.top - 8
+
+  if (left + cardW > window.innerWidth - 16) {
+    left = rect.left - cardW - 12
+  }
+  if (left < 8) left = 8
+  if (top < 8) top = 8
+  hoverPosition.value = { left: left + 'px', top: top + 'px' }
+
+  await nextTick()
+  const card = document.querySelector('.marker-card.floating')
+  if (card) {
+    const cr = card.getBoundingClientRect()
+    if (cr.bottom > window.innerHeight - 8) {
+      const adjust = cr.bottom - window.innerHeight + 8
+      hoverPosition.value = { left: left + 'px', top: (top - adjust) + 'px' }
+    }
+  }
 }
 
 function onRecentLeave() {
@@ -305,6 +337,17 @@ function onPopupClose() {
   hoverPreviewMarker = null
   isClicked = false
   selectedMarker.value = null
+}
+
+// ── 地图标记点击（管理员统一走弹窗） ──
+function onMarkerClick(marker) {
+  selectedMarker.value = marker
+}
+
+// ── 从弹窗点击传送 ──
+async function onTeleportFromPopup(marker) {
+  onPopupClose()
+  await onMarkerTeleport(marker)
 }
 
 // ── 传送 ──
@@ -404,6 +447,7 @@ function removePendingFromMap() {
 
 async function openReviewModal() {
   showReviewModal.value = true
+  reviewPage.value = 1
   await fetchPendingMarkers()
   mergePendingToMap()
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="form-overlay" @click.self="$emit('close')" @keydown.escape="$emit('close')">
+  <div class="form-overlay">
     <div class="form-card" role="dialog" aria-modal="true" :aria-label="isEdit ? '编辑标记' : '新增标记'">
       <h3>{{ isEdit ? '编辑标记' : '新增标记' }}</h3>
       <form @submit.prevent="onSubmit">
@@ -19,9 +19,6 @@
           描述
           <textarea v-model="form.description" placeholder="可选描述" rows="3"></textarea>
         </label>
-        <div class="coord-info">
-          坐标：{{ (form.x_coord ?? 0).toFixed(2) }}, {{ (form.y_coord ?? 0).toFixed(2) }}
-        </div>
         <label>
           截图
           <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" @change="onFileSelect" />
@@ -35,28 +32,22 @@
           <div v-if="uploadError" class="form-error">{{ uploadError }}</div>
         </label>
 
-        <div class="target-section">
+        <div class="target-section" v-if="isWaypoint">
           <label class="target-toggle">
-            <input type="checkbox" v-model="hasTarget" />
-            传送目标（点击时跳转）
+            <input type="checkbox" v-model="hasTarget" @change="onTargetToggle" />
+            启用传送目标
           </label>
           <template v-if="hasTarget">
             <label>
-              目标区域
-              <select v-model="form.target_region_id" @change="onTargetRegionChange">
-                <option v-for="r in regions" :key="r.id" :value="r.id">{{ r.name }}</option>
+              选择目标传送点
+              <select v-model="selectedWaypointId" @change="onWaypointSelect">
+                <option :value="null" disabled>请选择目标传送点</option>
+                <option v-for="w in allWaypoints" :key="w.id" :value="w.id"
+                  :disabled="w.id === props.marker?.id">
+                  {{ w.name }}（{{ w.region?.name }} · {{ w.map_name }}）
+                </option>
               </select>
             </label>
-            <label>
-              目标地图
-              <select v-model="form.target_map_name">
-                <option v-for="m in targetMaps" :key="m.name" :value="m.name">{{ m.name }}</option>
-              </select>
-            </label>
-            <div class="coord-row">
-              <label>目标 X <input type="number" step="0.01" v-model.number="form.target_x" /></label>
-              <label>目标 Y <input type="number" step="0.01" v-model.number="form.target_y" /></label>
-            </div>
           </template>
         </div>
 
@@ -84,7 +75,6 @@
  */
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import api from '../api/index'
-import { CHAPTER_KEYS } from '../stores/map'
 
 const props = defineProps({
   marker: { type: Object, default: null },           // 编辑时传入的标记对象
@@ -98,12 +88,17 @@ const props = defineProps({
 const emit = defineEmits(['close', 'submit'])
 
 const isEdit = computed(() => !!props.marker)
+const isWaypoint = computed(() => {
+  const cat = props.categories.find(c => c.id === form.category_id)
+  return cat?.name === '传送点'
+})
 const error = ref('')
 const uploading = ref(false)
 const uploadProgress = ref('')
 const uploadError = ref('')
-const targetMaps = ref([])                              // 目标区域下的子地图列表
 const hasTarget = ref(false)                            // 是否启用传送目标配置
+const selectedWaypointId = ref(null)                  // 选中的目标传送点 ID
+const allWaypoints = ref([])                            // 全部传送点标记列表
 let uploadAbortController = null
 
 const form = reactive({
@@ -120,6 +115,8 @@ const form = reactive({
 })
 
 onMounted(async () => {
+  if (isWaypoint.value) await fetchAllWaypoints()
+
   /** 编辑模式预填充已有数据，新增模式则使用拾取坐标 */
   if (props.marker) {
     form.name = props.marker.name
@@ -133,7 +130,16 @@ onMounted(async () => {
     form.target_x = props.marker.target_x
     form.target_y = props.marker.target_y
     hasTarget.value = !!props.marker.target_region_id
-    if (hasTarget.value) await fetchTargetMaps()
+    if (hasTarget.value) {
+      const match = allWaypoints.value.find(w =>
+        w.id !== props.marker.id &&
+        w.region_id === props.marker.target_region_id &&
+        w.map_name === (props.marker.target_map_name || '') &&
+        Math.abs(Number(w.x_coord) - Number(props.marker.target_x || 0)) < 1 &&
+        Math.abs(Number(w.y_coord) - Number(props.marker.target_y || 0)) < 1
+      )
+      selectedWaypointId.value = match ? match.id : null
+    }
   } else if (props.initialCoords) {
     form.x_coord = props.initialCoords.x
     form.y_coord = props.initialCoords.y
@@ -149,6 +155,10 @@ watch(() => props.initialCoords, (coords) => {
     form.x_coord = coords.x
     form.y_coord = coords.y
   }
+})
+
+watch(isWaypoint, (val) => {
+  if (val && allWaypoints.value.length === 0) fetchAllWaypoints()
 })
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -189,27 +199,49 @@ async function onFileSelect(e) {
   uploadProgress.value = ''
 }
 
-async function fetchTargetMaps() {
-  /** 根据目标区域加载其下的子地图列表 */
-  if (!form.target_region_id) return
-  const region = props.regions.find(r => r.id === form.target_region_id)
-  if (!region) return
-  const chapterKey = CHAPTER_KEYS[region.sort_order] || ''
-  if (!chapterKey) return
+async function fetchAllWaypoints() {
   try {
-    const res = await api.get('/maps', { params: { chapter: chapterKey } })
-    targetMaps.value = res.data
+    const wpCat = props.categories.find(c => c.name === '传送点')
+    if (!wpCat) return
+    const res = await api.get('/markers', { params: { category_id: String(wpCat.id), status: 'all', limit: 1000 } })
+    allWaypoints.value = res.data
   } catch {
-    targetMaps.value = []
+    allWaypoints.value = []
   }
 }
 
-async function onTargetRegionChange() {
-  /** 切换目标区域时重置地图和坐标选择 */
-  form.target_map_name = ''
-  form.target_x = null
-  form.target_y = null
-  await fetchTargetMaps()
+function onTargetToggle() {
+  if (!hasTarget.value) {
+    selectedWaypointId.value = null
+    form.target_region_id = null
+    form.target_map_name = ''
+    form.target_x = null
+    form.target_y = null
+    return
+  }
+  if (allWaypoints.value.length > 0 && !selectedWaypointId.value) {
+    const first = allWaypoints.value.find(w => w.id !== props.marker?.id)
+    if (first) {
+      selectedWaypointId.value = first.id
+      onWaypointSelect()
+    }
+  }
+}
+
+function onWaypointSelect() {
+  if (!selectedWaypointId.value) {
+    form.target_region_id = null
+    form.target_map_name = ''
+    form.target_x = null
+    form.target_y = null
+    return
+  }
+  const wp = allWaypoints.value.find(w => w.id === selectedWaypointId.value)
+  if (!wp) return
+  form.target_region_id = wp.region_id
+  form.target_map_name = wp.map_name || ''
+  form.target_x = Number(wp.x_coord)
+  form.target_y = Number(wp.y_coord)
 }
 
 function removeImage(index) {
@@ -258,11 +290,6 @@ label input, label select, label textarea {
 }
 label input:focus, label select:focus, label textarea:focus { border-color: var(--gold-dim); }
 label textarea { resize: vertical; }
-.coord-info {
-  font-size: 12px; color: var(--text-muted); margin-bottom: 14px;
-  padding: 6px 10px; background: var(--bg-input);
-  border-radius: var(--radius-sm); border: 1px solid var(--border);
-}
 .upload-status { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
 .image-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .image-item { position: relative; width: 80px; height: 80px; }

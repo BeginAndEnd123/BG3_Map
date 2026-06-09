@@ -16,12 +16,13 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import L from 'leaflet'
 
 const props = defineProps({
-  tileUrl: { type: String, default: '' },        // 瓦片加载 URL 模板
-  maxZoom: { type: Number, default: 6 },          // 最大缩放级别
-  markers: { type: Array, default: () => [] },    // 标记点列表
-  categories: { type: Array, default: () => [] }, // 分类列表 (含颜色和图标)
-  pickMode: { type: Boolean, default: false },    // 是否处于坐标拾取模式
-  tempMarker: { type: Object, default: null },    // 拾取模式中的临时标记位置
+  tileUrl: { type: String, default: '' },
+  maxZoom: { type: Number, default: 6 },
+  markers: { type: Array, default: () => [] },
+  categories: { type: Array, default: () => [] },
+  pickMode: { type: Boolean, default: false },
+  tempMarker: { type: Object, default: null },
+  isAdmin: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['marker-click', 'marker-teleport', 'map-pick'])
@@ -122,9 +123,10 @@ function updateMarkers() {
       className: 'marker-tooltip',
     })
 
-    // 点击事件：有传送目标的标记触发 teleport，否则显示详情
+    // 管理员点击有传送目标的标记 → 弹出详情（可选传送或编辑）
+    // 非管理员点击有传送目标的标记 → 直接传送
     marker.on('click', () => {
-      if (m.target_region_id) {
+      if (m.target_region_id && !props.isAdmin) {
         emit('marker-teleport', m)
       } else {
         emit('marker-click', m)

@@ -10,6 +10,7 @@
       </span>
       <span v-if="marker.status === 'pending'" class="status-tag pending">待审核</span>
       <span v-else-if="marker.status === 'rejected'" class="status-tag rejected">已拒绝</span>
+      <span v-if="isGenericWaypoint" class="status-tag waypoint-hint">通用传送点</span>
       <p v-if="marker.description" class="desc">{{ marker.description }}</p>
       <p class="coords">坐标: ({{ marker.x_coord }}, {{ marker.y_coord }})</p>
       <p v-if="marker.submitter_name" class="submitter">提交者: {{ marker.submitter_name }}</p>
@@ -48,6 +49,10 @@ const emit = defineEmits(['close'])
 
 const enlarged = ref(null)
 const images = computed(() => props.marker?.images || [])
+
+const isGenericWaypoint = computed(() => {
+  return props.categoryName === '传送点' && !props.marker?.target_region_id
+})
 
 const card = ref(null)
 const cardStyle = ref({})
@@ -103,7 +108,7 @@ onBeforeUnmount(() => {
 .marker-overlay.transparent { background: transparent; pointer-events: none; }
 .marker-overlay.transparent .marker-card { pointer-events: auto; }
 .marker-card.floating {
-  position: fixed; margin: 0;
+  position: fixed; margin: 0; z-index: 2000;
 }
 .marker-card {
   background: var(--bg-surface); color: var(--text-primary);
@@ -134,6 +139,7 @@ onBeforeUnmount(() => {
 }
 .status-tag.pending { background: #6b4c1e; color: #e8a838; border: 1px solid #e8a838; }
 .status-tag.rejected { background: #5c1a1a; color: #e06060; border: 1px solid #e06060; }
+.status-tag.waypoint-hint { background: #1e3a5c; color: #60a0c0; border: 1px solid #60a0c0; }
 .desc { font-size: 14px; color: var(--text-secondary); margin: 8px 0; line-height: 1.6; white-space: pre-wrap; }
 .coords { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 .submitter { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
@@ -152,8 +158,9 @@ onBeforeUnmount(() => {
   font-size: 13px; cursor: pointer; font-family: var(--font-body);
   transition: opacity var(--transition);
 }
-.action-bar :deep(.action-btn.edit) { background: var(--gold); color: var(--bg-deep); }
 .action-bar :deep(.action-btn.edit):hover { opacity: 0.85; }
 .action-bar :deep(.action-btn.delete) { background: var(--danger); color: #fff; }
 .action-bar :deep(.action-btn.delete):hover { background: var(--danger-hover); }
+.action-bar :deep(.action-btn.teleport) { background: var(--magic, #8b67c0); color: #fff; }
+.action-bar :deep(.action-btn.teleport):hover { opacity: 0.85; }
 </style>
