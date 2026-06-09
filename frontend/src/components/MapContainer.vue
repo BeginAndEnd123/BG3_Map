@@ -114,6 +114,14 @@ function updateMarkers() {
           className: '',
         })
     const marker = L.marker([m.x_coord, m.y_coord], { icon }).addTo(markerLayer)
+
+    marker.bindTooltip(m.name, {
+      direction: 'top',
+      offset: [0, -16],
+      opacity: 0.9,
+      className: 'marker-tooltip',
+    })
+
     // 点击事件：有传送目标的标记触发 teleport，否则显示详情
     marker.on('click', () => {
       if (m.target_region_id) {
@@ -192,8 +200,13 @@ function highlightMarker(lat, lng) {
   highlightTimer = setTimeout(() => highlightLayer.clearLayers(), 3000)
 }
 
+function clearHighlight() {
+  if (highlightTimer) clearTimeout(highlightTimer)
+  if (highlightLayer) highlightLayer.clearLayers()
+}
+
 // 暴露给父组件调用的方法
-defineExpose({ flyTo, highlightMarker, resetView })
+defineExpose({ flyTo, highlightMarker, clearHighlight, resetView })
 
 // 监听 props 变化，自动更新地图
 watch(() => props.tileUrl, (url) => updateTileLayer(url))
@@ -217,5 +230,19 @@ watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 @keyframes pulse-ring {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(1.5); opacity: 0; }
+}
+
+.marker-tooltip {
+  background: var(--bg-surface, #12121f);
+  border: 1px solid var(--border-gold, rgba(200,164,78,0.25));
+  border-radius: 2px;
+  color: var(--gold, #c8a44e);
+  font-family: 'Crimson Text', serif;
+  font-size: 13px;
+  padding: 4px 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.marker-tooltip::before {
+  border-top-color: var(--border-gold, rgba(200,164,78,0.25));
 }
 </style>

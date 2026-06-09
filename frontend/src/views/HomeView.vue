@@ -19,10 +19,13 @@
 
       <div class="category-filter">
         <h3>分类筛选</h3>
-        <label v-for="c in mapStore.categories" :key="c.id" class="category-item">
-          <input type="checkbox" :value="c.id" v-model="selectedCategoryIds" @change="reloadMarkers" />
-          <span>{{ c.name }}</span>
-        </label>
+        <div class="category-grid">
+          <label v-for="c in mapStore.categories" :key="c.id" class="category-item">
+            <input type="checkbox" :value="c.id" v-model="selectedCategoryIds" @change="reloadMarkers" />
+            <span>{{ c.name }}</span>
+          </label>
+        </div>
+        <button v-if="isAdmin" class="category-manage-btn" @click="showCategoryManager = true">分类管理</button>
       </div>
 
       <div class="search-box">
@@ -47,8 +50,12 @@
       <div class="recent-markers">
         <h3>最新添加</h3>
         <ul v-if="recent.recentMarkers.value.length > 0">
-          <li v-for="m in recent.recentMarkers.value" :key="m.id" role="button" tabindex="0"
-            @click="onRecentClick(m)" @keydown.enter.prevent="onRecentClick(m)" @keydown.space.prevent="onRecentClick(m)">
+                    <li v-for="m in recent.recentMarkers.value" :key="m.id" role="button" tabindex="0"
+            @click="onRecentClick(m)" @keydown.enter.prevent="onRecentClick(m)" @keydown.space.prevent="onRecentClick(m)"
+            @mouseenter="onRecentHover(m, $event)" @mouseleave="onRecentLeave">
+
+
+
             <span class="recent-name">{{ m.name }}</span>
             <span class="recent-meta">{{ m.category?.name || '' }}{{ m.category?.name && m.region?.name ? ' · ' : '' }}{{ m.region?.name || '' }}</span>
           </li>
@@ -71,14 +78,13 @@
       </div>
 
       <button class="add-btn" @click="onStartAdd">
-        + {{ isAdmin ? '新增标记' : (authStore.user ? '提交标记' : '登录后即可提交新标记') }}
+        {{ isAdmin ? '新增标记' : (authStore.user ? '提交标记' : '登录后即可提交新标记') }}
       </button>
 
       <div v-if="isAdmin" class="review-section">
         <h3>审核管理</h3>
         <p class="review-count">待审核：{{ pendingCount }} 个</p>
         <button class="review-toggle-btn" @click="openReviewModal">打开审核面板</button>
-        <button class="review-toggle-btn" style="margin-top:4px" @click="showCategoryManager = true">分类管理</button>
       </div>
     </SidePanel>
 
@@ -122,7 +128,9 @@
 
     <MarkerPopup v-if="selectedMarker" :marker="selectedMarker"
       :category-name="selectedCategoryName"
-      @close="selectedMarker = null">
+      :transparent="!!hoverPreviewMarker"
+      :position="hoverPosition"
+      @close="onPopupClose">
       <template #actions v-if="isAdmin">
         <button class="action-btn edit" @click="onEdit(selectedMarker)">编辑</button>
         <button class="action-btn delete" @click="onDelete(selectedMarker.id)">删除</button>
@@ -138,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
@@ -161,6 +169,13 @@ const router = useRouter()
 const mapRef = ref(null)
 const selectedMarker = ref(null)
 const selectedCategoryIds = ref([])
+
+// 分类加载后默认全选
+watch(() => mapStore.categories, (cats) => {
+  if (cats.length > 0 && selectedCategoryIds.value.length === 0) {
+    selectedCategoryIds.value = cats.map(c => c.id)
+  }
+})
 
 const nav = useMapNavigation()
 const search = useMarkerSearch()
@@ -256,7 +271,41 @@ function onSearchClick(marker) {
 }
 
 // ── 最新标记点击 ──
-function onRecentClick(marker) { onSearchClick(marker) }
+function onRecentClick(marker) {
+  if (hoverLeaveTimer) clearTimeout(hoverLeaveTimer)
+  isClicked = true
+  hoverPreviewMarker = marker
+  onSearchClick(marker)
+}
+
+let hoverPreviewMarker = null
+let hoverLeaveTimer = null
+let isClicked = false
+const hoverPosition = ref({ left: '0px', top: '0px' })
+
+async function onRecentHover(marker, event) {
+  if (hoverLeaveTimer) { clearTimeout(hoverLeaveTimer); hoverLeaveTimer = null }
+  isClicked = false
+  hoverPreviewMarker = marker
+  selectedMarker.value = marker
+  const rect = event.currentTarget.getBoundingClientRect()
+  hoverPosition.value = { left: rect.right + 12 + 'px', top: rect.top - 8 + 'px' }
+}
+
+function onRecentLeave() {
+  hoverLeaveTimer = setTimeout(() => {
+    if (!hoverPreviewMarker || isClicked) return
+    hoverPreviewMarker = null
+    selectedMarker.value = null
+    if (mapRef.value?.clearHighlight) mapRef.value.clearHighlight()
+  }, 150)
+}
+
+function onPopupClose() {
+  hoverPreviewMarker = null
+  isClicked = false
+  selectedMarker.value = null
+}
 
 // ── 传送 ──
 async function onMarkerTeleport(marker) {
@@ -307,12 +356,10 @@ async function onDelete(id) {
 
 // ── 区域/地图切换 ──
 async function onRegionChange() {
-  selectedCategoryIds.value = []
   search.keyword.value = ''
   await nav.onRegionChange(() => mapRef.value?.resetView())
 }
 async function onMapChange() {
-  selectedCategoryIds.value = []
   search.keyword.value = ''
   mapRef.value?.resetView()
   await nav.onMapChange()
@@ -343,6 +390,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   search.cleanup()
+  if (hoverLeaveTimer) clearTimeout(hoverLeaveTimer)
 })
 
 function mergePendingToMap() {
@@ -393,6 +441,10 @@ function closeReviewModal() {
 }
 .region-select select:focus, .map-select select:focus { border-color: var(--gold-dim); }
 
+.category-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px;
+}
+
 .category-item {
   display: flex; align-items: center; gap: 5px;
   margin: 2px 0; cursor: pointer; font-size: 13px;
@@ -401,6 +453,15 @@ function closeReviewModal() {
 }
 .category-item:hover { background: rgba(200,164,78,0.06); }
 .category-item input[type="checkbox"] { accent-color: var(--gold); }
+.category-manage-btn {
+  width: 100%; margin-top: 8px; padding: 7px 12px;
+  border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(200,164,78,0.06) 0%, transparent 100%);
+  color: var(--gold-light);
+  font-family: var(--font-body); font-size: 12px;
+  cursor: pointer; transition: all var(--transition);
+}
+.category-manage-btn:hover { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
 
 .search-box { position: relative; }
 .search-box input {
@@ -478,12 +539,11 @@ function closeReviewModal() {
 .page-goto button:hover { background: var(--gold-light); }
 
 .add-btn {
-  width: 100%; margin-top: 12px; padding: 9px;
+  width: 100%; margin-top: 12px; padding: 7px 12px;
   border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgba(200,164,78,0.08) 0%, rgba(200,164,78,0.02) 100%);
-  color: var(--gold);
-  font-family: var(--font-display); font-size: 12px;
-  font-weight: 600; letter-spacing: 0.06em;
+  background: linear-gradient(180deg, rgba(200,164,78,0.06) 0%, transparent 100%);
+  color: var(--gold-light);
+  font-family: var(--font-body); font-size: 12px;
   cursor: pointer; transition: all var(--transition);
 }
 .add-btn:hover { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }

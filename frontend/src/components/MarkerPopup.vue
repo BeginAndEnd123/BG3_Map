@@ -1,6 +1,6 @@
 <template>
-  <div class="marker-overlay" v-if="marker" @click.self="onOverlayClose" @keydown.escape="onOverlayClose">
-    <div class="marker-card" ref="card" :style="cardStyle" role="dialog" aria-modal="true" :aria-label="marker.name">
+  <div class="marker-overlay" :class="{ transparent: transparent }" v-if="marker" @click.self="onOverlayClose" @keydown.escape="onOverlayClose">
+    <div class="marker-card" :class="{ floating: transparent }" ref="card" :style="cardStyle" role="dialog" aria-modal="true" :aria-label="marker.name">
       <div class="popup-header" @mousedown="onDragStart">
         <h3>{{ marker.name }}</h3>
         <button class="close-btn" @click="$emit('close')" aria-label="关闭">&times;</button>
@@ -34,12 +34,14 @@
  * 支持截图点击放大预览。
  * 通过 actions 插槽接收外部操作按钮（如编辑/删除）。
  */
-import { ref, computed, reactive, onBeforeUnmount } from 'vue'
+import { ref, computed, reactive, watch, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   marker: { type: Object, default: null },
   categoryName: { type: String, default: '' },
   categoryColor: { type: String, default: '#3388ff' },
+  transparent: { type: Boolean, default: false },
+  position: { type: Object, default: () => ({ left: '0px', top: '0px' }) },
 })
 
 const emit = defineEmits(['close'])
@@ -52,6 +54,12 @@ const cardStyle = ref({})
 const dragging = ref(false)
 const offset = reactive({ x: 0, y: 0 })
 let startX = 0, startY = 0
+
+watch(() => props.position, (pos) => {
+  if (props.transparent && pos) {
+    cardStyle.value = { left: pos.left, top: pos.top }
+  }
+}, { deep: true, immediate: true })
 
 function onDragStart(e) {
   if (e.target.closest('button')) return
@@ -91,6 +99,11 @@ onBeforeUnmount(() => {
 .marker-overlay {
   position: fixed; inset: 0; background: rgba(8,8,18,0.5);
   z-index: 1000; display: flex; align-items: center; justify-content: center;
+}
+.marker-overlay.transparent { background: transparent; pointer-events: none; }
+.marker-overlay.transparent .marker-card { pointer-events: auto; }
+.marker-card.floating {
+  position: fixed; margin: 0;
 }
 .marker-card {
   background: var(--bg-surface); color: var(--text-primary);
