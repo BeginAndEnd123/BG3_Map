@@ -307,6 +307,9 @@ BG3_map/
 
 ## 切图工具
 
+> **注意**：`TileMap/`（约 68,548 张瓦片）已加入 `.gitignore`，不上传仓库。
+> 克隆项目后运行一次切图工具即可生成本地瓦片。
+
 项目自带瓦片切图工具 `tools/tile_cutter.py`，用于将 `Map/` 下的 PNG 源图切割为 Leaflet CRS.Simple 格式的瓦片。
 
 ### 工作原理
@@ -431,4 +434,6 @@ cd frontend
 npm install
 npm run dev
 ```
+
+> **首次使用**：克隆仓库后 `TileMap/` 和 `backend/venv/`、`frontend/node_modules/` 均不在仓库中，需依次执行步骤 2-4 完成环境搭建和瓦片切图。
 
