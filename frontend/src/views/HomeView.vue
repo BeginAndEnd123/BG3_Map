@@ -523,12 +523,16 @@ function closeReviewModal() {
 .page-dots { color: var(--text-muted); font-size: 12px; min-width: 16px; text-align: center; }
 .page-goto { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 3px; }
 .page-goto input {
-  width: 34px; height: 22px; padding: 0 3px;
+  width: 48px; height: 22px; padding: 0 3px;
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   background: var(--bg-input); color: var(--text-primary);
   font-size: 11px; font-family: var(--font-body); text-align: center; outline: none;
 }
 .page-goto input:focus { border-color: var(--gold-dim); }
+/* 隐藏数字输入框的上下箭头 */
+.page-goto input::-webkit-outer-spin-button,
+.page-goto input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.page-goto input[type="number"] { -moz-appearance: textfield; }
 .page-goto button {
   min-width: 28px; height: 22px; font-size: 11px;
   background: var(--gold); color: var(--bg-deep);
