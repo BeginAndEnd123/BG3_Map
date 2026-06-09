@@ -19,6 +19,9 @@
           <span class="btn-text">{{ submitting ? (submitLabel || '请稍候...') : title }}</span>
         </button>
       </form>
+      <router-link to="/" class="guest-btn">
+        <span class="btn-text">游客模式 — 直接浏览</span>
+      </router-link>
       <p v-if="linkText" class="auth-link">
         {{ linkText }}<router-link :to="linkTo">{{ linkLabel }}</router-link>
       </p>
@@ -175,6 +178,37 @@ button[type="submit"]:active:not(:disabled) {
   margin-left: 4px; transition: color var(--transition);
 }
 .auth-link a:hover { color: var(--gold-light); }
+
+/* ── 游客模式按钮（与提交按钮同款） ── */
+.guest-btn {
+  display: block; width: 100%; padding: 12px; margin-top: 10px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(200,164,78,0.1) 0%, rgba(200,164,78,0.03) 100%);
+  color: var(--gold);
+  font-family: var(--font-display); font-size: 13px;
+  font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: pointer; text-align: center; text-decoration: none;
+  position: relative; overflow: hidden;
+  transition: all 0.3s ease;
+}
+.guest-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(200,164,78,0.06), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.guest-btn:hover {
+  background: var(--gold); color: var(--bg-deep);
+  border-color: var(--gold);
+  box-shadow: 0 0 28px rgba(200,164,78,0.2), 0 0 60px rgba(200,164,78,0.06);
+  transform: translateY(-1px);
+}
+.guest-btn:hover::after {
+  transform: translateX(100%);
+}
+.guest-btn:active { transform: translateY(0); }
 
 /* ── 错误 ── */
 .error {

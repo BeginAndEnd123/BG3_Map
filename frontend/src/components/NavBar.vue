@@ -1,12 +1,15 @@
 <template>
   <div class="navbar">
     <span class="brand">BG3 交互式地图</span>
-    <div class="nav-right" v-if="authStore.user">
-      <span class="user-info">
-        <span class="user-name">{{ authStore.user.username }}</span>
-        <span v-if="authStore.user.is_admin" class="admin-badge">管理员</span>
-      </span>
-      <button class="logout-btn" @click="onLogout">登出</button>
+    <div class="nav-right">
+      <template v-if="authStore.user">
+        <span class="user-info">
+          <span class="user-name">{{ authStore.user.username }}</span>
+          <span v-if="authStore.user.is_admin" class="admin-badge">管理员</span>
+        </span>
+        <button class="logout-btn" @click="onLogout">登出</button>
+      </template>
+      <button v-else class="login-btn" @click="onGoLogin">登录</button>
     </div>
   </div>
 </template>
@@ -20,6 +23,10 @@ const authStore = useAuthStore()
 
 function onLogout() {
   authStore.logout()
+  router.push('/login')
+}
+
+function onGoLogin() {
   router.push('/login')
 }
 </script>
@@ -52,4 +59,12 @@ function onLogout() {
   transition: all var(--transition);
 }
 .logout-btn:hover { border-color: var(--gold); color: var(--gold); }
+.login-btn {
+  padding: 4px 14px; font-size: 13px;
+  border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
+  background: transparent; color: var(--gold); cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+}
+.login-btn:hover { background: var(--gold); color: var(--bg-deep); border-color: var(--gold); }
 </style>

@@ -70,8 +70,8 @@
         </div>
       </div>
 
-      <button v-if="authStore.user" class="add-btn" @click="onStartAdd">
-        + {{ isAdmin ? '新增标记' : '提交标记' }}
+      <button class="add-btn" @click="onStartAdd">
+        + {{ isAdmin ? '新增标记' : (authStore.user ? '提交标记' : '登录后即可提交新标记') }}
       </button>
 
       <div v-if="isAdmin" class="review-section">
@@ -139,6 +139,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMapStore } from '../stores/map'
 import { useAuthStore } from '../stores/auth'
 import SidePanel from '../components/SidePanel.vue'
@@ -156,6 +157,7 @@ import { getMarkers, getPendingCount } from '../api/markers'
 
 const mapStore = useMapStore()
 const authStore = useAuthStore()
+const router = useRouter()
 const mapRef = ref(null)
 const selectedMarker = ref(null)
 const selectedCategoryIds = ref([])
@@ -265,6 +267,10 @@ async function onMarkerTeleport(marker) {
 
 // ── 拾取模式 ──
 function onStartAdd() {
+  if (!authStore.user) {
+    router.push('/login')
+    return
+  }
   pick.onStartAdd()
   form.showAddForm.value = false
 }
