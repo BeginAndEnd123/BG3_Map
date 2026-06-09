@@ -245,4 +245,18 @@ watch(() => props.tempMarker, () => updateTempMarker(), { deep: true })
 .marker-tooltip::before {
   border-top-color: var(--border-gold, rgba(200,164,78,0.25));
 }
+
+.leaflet-control-zoom a {
+  background: var(--bg-surface, #12121f) !important;
+  border: 1px solid var(--border, #2a2840) !important;
+  color: var(--text-secondary, #8a8578) !important;
+  width: 30px !important; height: 30px !important;
+  line-height: 28px !important; font-size: 16px !important;
+  border-radius: 2px !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--bg-card, #1a1a2c) !important;
+  color: var(--gold, #c8a44e) !important;
+  border-color: var(--gold-dim, #8a6d30) !important;
+}
 </style>
